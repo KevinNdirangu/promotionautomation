@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Promotion Interview Portal</title>
+  <style>
+    :root {
+      --primary: #1e3a8a;
+      --primary-hover: #172554;
+      --accent: #2563eb;
+      --sidebar-bg: #0f172a;
+      --sidebar-hover: #1e293b;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #d97706;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { display: flex; height: 100vh; background-color: var(--bg); color: var(--text); overflow: hidden; }
+
+    /* SIDEBAR */
+    #sidebar {
+      width: 270px;
+      background-color: var(--sidebar-bg);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      border-right: 1px solid #1e293b;
+      transition: width 0.2s ease;
+      position: relative;
+    }
+    body.sidebar-collapsed #sidebar { width: 72px; }
+    body.sidebar-collapsed #sidebar .brand-title,
+    body.sidebar-collapsed #sidebar .brand-sub,
+    body.sidebar-collapsed #sidebar .sidebar-footer,
+    body.sidebar-collapsed #sidebar .nav-link { display: none; }
+    .sidebar-toggle {
+      position: absolute;
+      top: 14px;
+      right: 12px;
+      width: 32px;
+      height: 32px;
+      border: 1px solid #475569;
+      border-radius: 6px;
+      background: #1e293b;
+      color: #fff;
+      cursor: pointer;
+      font-size: 18px;
+    }
+    body.sidebar-collapsed .sidebar-toggle { right: 20px; }
+    body.sidebar-collapsed #sidebar .brand-section { min-height: 62px; }
+    .brand-section {
+      padding: 22px 20px;
+      border-bottom: 1px solid #1e293b;
+    }
+    .brand-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #38bdf8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .brand-sub {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-top: 4px;
+    }
+    #sidebar ul { list-style: none; margin-top: 15px; }
+    #sidebar ul li a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px 20px;
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: 13.5px;
+      font-weight: 500;
+      transition: 0.15s ease;
+      cursor: pointer;
+    }
+    #sidebar ul li a:hover {
+      background-color: var(--sidebar-hover);
+      color: #ffffff;
+    }
+    #sidebar ul li a.active {
+      background-color: #1e293b;
+      color: #ffffff;
+      border-left: 4px solid var(--accent);
+      font-weight: 600;
+    }
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 16px 20px;
+      border-top: 1px solid #1e293b;
+      font-size: 11.5px;
+      color: #64748b;
+    }
+
+    /* MAIN CONTENT */
+    #main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .top-header {
+      background: white;
+      border-bottom: 1px solid var(--border);
+      padding: 14px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .station-badge-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      padding: 6px 14px;
+      border-radius: 20px;
+    }
+    .station-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+    .station-value {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    .edit-station-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 12px;
+      color: var(--accent);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .edit-station-btn:hover { text-decoration: underline; }
+
+    .content-viewport {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px;
+    }
+    #nominalColumnsModal { display: none; }
+    #nominalColumnsModal.active { display: flex; }
+
+    /* VIEWS */
+    .page-view { display: none; }
+    .page-view.active { display: block; animation: fadeIn 0.2s ease-in-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* COMPONENTS */
+    .card {
+      background: var(--card-bg);
+      border-radius: 8px;
+      padding: 22px;
+      border: 1px solid var(--border);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      margin-bottom: 22px;
+    }
+    .section-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .section-desc {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+
+    /* BUTTONS */
+    .btn {
+      background-color: var(--accent);
+      color: white;
+      border: none;
+      padding: 9px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s;
+    }
+    .btn:hover { background-color: #1d4ed8; }
+    .btn-secondary { background-color: #475569; }
+    .btn-secondary:hover { background-color: #334155; }
+    .btn-success { background-color: var(--success); }
+    .btn-success:hover { background-color: #15803d; }
+    .btn-danger { background-color: var(--danger); }
+    .btn-danger:hover { background-color: #b91c1c; }
+    .btn-outline {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-outline:hover { background: #f1f5f9; }
+
+    /* STATS CARDS */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: white;
+      border-radius: 8px;
+      padding: 18px 20px;
+      border: 1px solid var(--border);
+      border-left-width: 5px;
+    }
+    .stat-card .stat-title {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .stat-card .stat-num {
+      font-size: 28px;
+      font-weight: 800;
+      margin-top: 6px;
+    }
+
+    /* TABLES */
+    .table-container {
+      max-height: 520px;
+      overflow-y: auto;
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+    .application-table-scroll {
+      overflow-x: auto;
+      height: 16px;
+      margin-bottom: 6px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: #f8fafc;
+    }
+    .application-table-scroll-inner { height: 1px; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: left;
+    }
+    th {
+      background-color: #0f172a;
+      color: white;
+      padding: 12px 14px;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      background: white;
+      white-space: nowrap;
+    }
+    tr:hover td { background-color: #f8fafc; }
+    
+    /* INLINE EDITING CUES */
+    [data-editable-application] {
+      cursor: pointer;
+      position: relative;
+      transition: background 0.15s;
+    }
+    [data-editable-application]:hover {
+      background-color: #f1f5f9;
+      box-shadow: inset 0 0 0 1px #cbd5e1;
+    }
+
+    /* BADGES */
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11.5px;
+      font-weight: 700;
+    }
+    .badge-success { background: #dcfce7; color: #15803d; }
+    .badge-danger { background: #fee2e2; color: #b91c1c; }
+    .badge-warning { background: #fef3c7; color: #b45309; }
+    .badge-info { background: #e0f2fe; color: #0369a1; }
+
+    /* FORMS & INPUTS */
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-label {
+      display: block;
+      font-size: 12.5px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #334155;
+    }
+    .form-control {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 13px;
+      background: white;
+      color: var(--text);
+    }
+    .form-control:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(37,99,235,0.15);
+    }
+
+    /* MODAL */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-box {
+      background: white;
+      border-radius: 10px;
+      width: 520px;
+      max-width: 90vw;
+      padding: 24px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+    .modal-title { font-size: 18px; font-weight: 700; color: var(--text); }
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: var(--text-muted);
+    }
+
+    /* PRINT STYLES */
+    @media print {
+      #sidebar, .top-header, .no-print { display: none !important; }
+      body, #main-content, .content-viewport {
+        height: auto !important;
+        overflow: visible !important;
+        background: white !important;
+        padding: 0 !important;
+      }
+      .page-view { display: none !important; }
+      .page-view.active { display: block !important; }
+      .card { border: none !important; box-shadow: none !important; padding: 0 !important; }
+      th { background-color: #e2e8f0 !important; color: black !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SIDEBAR NAVIGATION -->
+  <nav id="sidebar">
+    <div class="brand-section">
+      <button id="sidebarToggle" class="sidebar-toggle no-print" type="button" title="Collapse menu" aria-label="Collapse menu">☰</button>
+      <div class="brand-title">Promotion Board</div>
+      <div class="brand-sub">Promotion & Scoring Portal</div>
+    </div>
+    <ul>
+      <li><a class="nav-link" class="nav-link" href="dashboard.html">🏠 Welcome Dashboard</a></li>
+      <li><a class="nav-link" href="nominal-roll.html">📋 1. Master Nominal Roll</a></li>
+      <li><a class="nav-link" class="nav-link active" href="applications-vetting.html">📑 2. Applications & Vetting</a></li>
+      <li><a class="nav-link" href="panel-scoring.html">📝 3. Panel Interview Scoring</a></li>
+      <li><a class="nav-link" href="merit-rankings.html">📊 4. Reports & Merit Rankings</a></li>
+      <div style="margin-top: 15px; font-size: 11px; text-transform: uppercase; color: var(--text-muted); padding-left: 20px; font-weight: 700;">Regional Command Group</div>
+      <ul style="margin-top: 5px;">
+        <li><a class="nav-link" href="rc-dashboard.html">📊 Regional Dashboard</a></li>
+        <li><a class="nav-link" href="rc-stations-scores.html">📥 1. Receive Station Results</a></li>
+        <li><a class="nav-link" href="regional-boards.html">🎯 2. Board Selection & Cut-offs</a></li>
+        <li><a class="nav-link" href="regional-scoring.html">⚖️ 3. Panel Interview Scoring</a></li>
+        <li><a class="nav-link" href="final-scores.html">🏆 4. Final Merit & Details</a></li>
+      </ul>
+      <div style="margin-top: 15px; font-size: 11px; text-transform: uppercase; color: var(--text-muted); padding-left: 20px; font-weight: 700;">System Admin</div>
+      <ul style="margin-top: 5px;">
+        <li><a class="nav-link" href="system-tools.html">⚠️ System & Data Cleanup</a></li>
+      </ul>
+
+    </ul>
+    <div class="sidebar-footer">
+      <div>Promotion Cycle: <strong id="sidebarYear">01/2026</strong></div>
+    </div>
+  </nav>
+
+  <!-- MAIN APP CONTAINER -->
+  <main id="main-content">
+    
+    <!-- TOP STATUS BAR -->
+    <header class="top-header no-print">
+      <div>
+        <h3 id="topHeaderTitle" style="font-size: 16px; font-weight: 600;">Embu Main Prison - Promotion Portal (<span id="promotionPeriodDisplay">01/2026</span>)</h3>
+      </div>
+      <div class="station-badge-wrapper">
+        <span class="station-label">Active Station:</span>
+        <span class="station-value" id="globalStationDisplay">EMBU MAIN PRISON</span>
+        <button class="edit-station-btn" onclick="openStationModal()">✏️ Edit</button>
+      </div>
+    </header>
+
+    <!-- CONTENT VIEWPORT -->
+    <div class="content-viewport">
+
+      <section id="applications-page" class="page-view active">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+          <div>
+            <h2 class="section-title">Step 2: Candidate Applications & Disciplinary Vetting</h2>
+            <p class="section-desc">Select officers from the Master Nominal Roll, specify promotion target ranks, and evaluate eligibility.</p>
+            <p class="section-desc" style="margin-top:6px;"><strong id="nominalSourceCount">Loading nominal roll...</strong> available from Nominal Roll; <strong id="selectedApplicantCount">0</strong> selected as applicants.</p>
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <button class="btn btn-success" onclick="openManualAddModal()">+ Add Candidate Manually</button>
+            <button class="btn btn-secondary" onclick="openImportAppsModal()">📥 Import Excel</button>
+            <button class="btn" onclick="openNominalApplicantSelector()">☑ Select Applicants</button>
+            <button class="btn btn-secondary" onclick="generateEligibilityLists()">Refresh Lists</button>
+            <button class="btn btn-secondary" onclick="exportEligibilityLists()">Export to Excel</button>
+            <button class="btn btn-secondary" onclick="clearApplicationList()">Clear List</button>
+          </div>
+        </div>
+        <div id="applicantUploadStatus" style="margin-bottom: 10px; font-size: 13px; font-weight: 600;"></div>
+
+        <div class="card no-print">
+          <h3 style="font-size: 15px; margin-bottom: 12px;">HQ Eligibility Criteria & Cut-off Settings</h3>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; align-items:end;">
+            <div><label class="form-label">Eligibility Cut-off Date</label><input type="date" id="criteriaCutoffDate" class="form-control" title="Evaluates all years of service and clean record limits against this fixed date instead of today."></div>
+            <div><label class="form-label">Min Years in Service</label><input type="number" id="criteriaYearsService" class="form-control" min="0"></div>
+            <div><label class="form-label">Min Years in Current Rank</label><input type="number" id="criteriaYearsRank" class="form-control" min="0"></div>
+            <div><label class="form-label">Clean Record Period (Yrs)</label><input type="number" id="criteriaCleanYears" class="form-control" min="0"></div>
+            <button class="btn" onclick="saveEligibilityCriteria()">Save & Recalculate</button>
+          </div>
+          <div id="criteriaStatus" style="margin-top:10px; font-size:13px;"></div>
+        </div>
+
+        <!-- Applicant Records Table -->
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+            <div style="display: flex; gap: 12px; align-items: center;">
+              <h3 style="font-size: 15px;">Candidates List (<span id="appsTableCount">0</span>)</h3>
+              <select id="appsFilterRank" class="form-control" style="width: 220px;" onchange="loadApplicationsTable()">
+                <option value="ALL">All Ranks Applied For</option>
+                <option value="CPL">Corporal (CPL)</option>
+                <option value="SGT">Sergeant (SGT)</option>
+                <option value="S/SGT">Senior Sergeant (S/SGT)</option>
+                <option value="IP">Inspector (IP)</option>
+                <option value="CIP">CIP</option><option value="ASP">ASP</option><option value="SP">SP</option>
+                <option value="SSP">SSP</option><option value="CP">CP</option><option value="ACGP">ACGP</option>
+                <option value="SACGP">SACGP</option><option value="DCGP">DCGP</option><option value="CGP">CGP</option>
+              </select>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <input type="text" id="appsSearchInput" class="form-control" style="width: 240px;" placeholder="Search PF or Name..." oninput="debounceAppsSearch()">
+              <button class="btn btn-secondary" type="button" onclick="openApplicationColumnsModal()">Columns</button>
+            </div>
+          </div>
+
+          <div id="applicationTableTopScroll" class="application-table-scroll" aria-label="Top horizontal scrollbar for applications"><div id="applicationTableTopScrollInner" class="application-table-scroll-inner"></div></div>
+          
+          <div id="applicationTableContainer" class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th class="col-serial">Serial Number</th>
+                  <th class="col-pf-no">PF Number</th>
+                  <th class="col-name">Candidate Name</th>
+                  <th class="col-current-rank">Current Rank</th>
+                  <th class="col-gender">Gender</th>
+                  <th class="col-ethnicity">Ethnicity</th>
+                  <th class="col-yob">Y.O.B.</th>
+                  <th class="col-academic-qual">Academic Qualification</th>
+                  <th class="col-prof-qual">Professional Qualification</th>
+                  <th class="col-date-enlist">Year Enlisted</th>
+                  <th class="col-posted">Date Posted</th>
+                  <th class="col-section">Section</th>
+                  <th class="col-county">Home County</th>
+                  <th class="col-station">Station</th>
+                  <th class="col-target-rank">Rank Applied For</th>
+                  <th class="col-years-service">Years in Service</th>
+                  <th class="col-station-yrs">Years in Station</th>
+                  <th class="col-last-promo">Date Last Promoted</th>
+                  <th class="col-years-rank">Years in Current Rank</th>
+                  <th class="col-offences">Offences Count</th>
+                  <th class="col-last-offence">Date of Last Offence</th>
+                  <th class="col-clean-record">3-Yr Record</th>
+                  <th class="col-eligibility">Status</th>
+                  <th class="col-reason">Reason / Notes</th>
+                  <th class="col-actions">Action</th>
+                </tr>
+              </thead>
+              <tbody id="applicationsTableBody">
+                <tr><td colspan="25" style="text-align:center;color:var(--text-muted);">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+<div id="stationModal" class="modal-overlay">
+  <div class="modal-box" style="width: 450px;">
+    <div class="modal-header">
+      <h3 class="modal-title">Global Settings</h3>
+      <button class="modal-close" onclick="closeStationModal()">x</button>
+    </div>
+    <p class="section-desc">Set the station name and promotion cycle. These appear on reports and exported documents.</p>
+    <div class="form-group" style="margin-top: 15px;">
+      <label class="form-label">Station Name</label>
+      <input id="stationModalInput" type="text" class="form-control" placeholder="e.g. EMBU MAIN PRISON">
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+      <div class="form-group">
+        <label class="form-label">Promotion Month</label>
+        <select id="promotionMonthInput" class="form-control">
+          <option value="1">January</option>
+          <option value="2">February</option>
+          <option value="3">March</option>
+          <option value="4">April</option>
+          <option value="5">May</option>
+          <option value="6">June</option>
+          <option value="7">July</option>
+          <option value="8">August</option>
+          <option value="9">September</option>
+          <option value="10">October</option>
+          <option value="11">November</option>
+          <option value="12">December</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Promotion Year</label>
+        <input id="promotionYearInput" type="number" class="form-control" min="2000" max="2100" value="2026">
+      </div>
+    </div>
+    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+      <button class="btn btn-secondary" onclick="closeStationModal()">Cancel</button>
+      <button class="btn btn-success" onclick="saveStationName()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- Import Applications Modal -->
+  <div id="importAppsModal" class="modal-overlay">
+    <div class="modal-box" style="width: 500px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Import Candidate Applications</h3>
+        <button class="modal-close" onclick="closeImportAppsModal()">x</button>
+      </div>
+      <p class="section-desc">Excel file must contain PF/Number, Name, and Rank. The target promotion rank will be calculated automatically.</p>
+      <div class="form-group">
+        <label class="form-label">Excel File *</label>
+        <input type="file" id="import_apps_file" class="form-control" accept=".xlsx, .xls">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Station (For new officers)</label>
+        <input type="text" id="import_apps_station" class="form-control" title="Will default to global active station if left blank">
+      </div>
+      <div id="importAppsStatus" style="font-size:13px; font-weight:600; margin-bottom: 10px;"></div>
+      <div style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button class="btn btn-outline" onclick="closeImportAppsModal()">Cancel</button>
+        <button class="btn btn-success" onclick="submitImportApps()">Import File</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="nominalApplicantModal" class="modal-overlay">
+    <div class="modal-box" style="max-width: 900px; max-height: 88vh;">
+      <div class="modal-header">
+        <h3 class="modal-title">Select Officers Who Applied</h3>
+        <button class="modal-close" onclick="closeNominalApplicantSelector()">x</button>
+      </div>
+      <p class="section-desc">Tick every officer who submitted an application. Only selected officers will appear in Step 2.</p>
+      <input id="nominalApplicantSearch" class="form-control" placeholder="Search PF number, name, or rank..." style="margin:14px 0;" oninput="filterNominalApplicantChoices()">
+      <div id="nominalApplicantChoices" style="max-height:52vh; overflow:auto; border:1px solid var(--border); border-radius:6px;"></div>
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
+        <button class="btn btn-secondary" onclick="closeNominalApplicantSelector()">Cancel</button>
+        <button class="btn btn-success" onclick="saveNominalApplicantSelection()">Add Selected Applicants</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="manualAddModal" class="modal-overlay">
+    <div class="modal-box" style="width: 550px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Manually Add Candidate</h3>
+        <button class="modal-close" onclick="closeManualAddModal()">x</button>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+        <div class="form-group">
+          <label class="form-label">PF Number *</label>
+          <input type="text" id="manual_pf" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Candidate Name *</label>
+          <input type="text" id="manual_name" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Current Rank *</label>
+          <select id="manual_current_rank" class="form-control">
+            <option value="PC">PC</option>
+            <option value="CPL">CPL</option>
+            <option value="SGT">SGT</option>
+            <option value="S/SGT">S/SGT</option>
+            <option value="IP">IP</option>
+            <option value="CIP">CIP</option>
+            <option value="ASP">ASP</option>
+            <option value="SP">SP</option>
+            <option value="SSP">SSP</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Rank Applied For *</label>
+          <select id="manual_target_rank" class="form-control">
+            <option value="CPL">CPL</option>
+            <option value="SGT">SGT</option>
+            <option value="S/SGT">S/SGT</option>
+            <option value="IP">IP</option>
+            <option value="CIP">CIP</option>
+            <option value="ASP">ASP</option>
+            <option value="SP">SP</option>
+            <option value="SSP">SSP</option>
+            <option value="CP">CP</option>
+          </select>
+        </div>
+        <div class="form-group" style="grid-column: span 2;">
+          <label class="form-label">Station (If adding from a different command)</label>
+          <input type="text" id="manual_station" class="form-control" placeholder="e.g. EMBU MAIN PRISON">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date of Last Promotion (PC: N/A)</label>
+          <input type="date" id="manual_promotion" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Offences Count</label>
+          <input type="number" id="manual_offences" class="form-control" value="0" min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date of Last Offence</label>
+          <input type="date" id="manual_offence_date" class="form-control">
+        </div>
+      </div>
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+        <button class="btn btn-outline" onclick="closeManualAddModal()">Cancel</button>
+        <button class="btn btn-success" onclick="submitManualAddCandidate()">Save Candidate</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

@@ -1,0 +1,1247 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Master Nominal Roll</title><script>location.replace('dashboard.html?page=nominal-page');</script></head><body></body></html>
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Promotion Interview Portal</title>
+  <style>
+    :root {
+      --primary: #1e3a8a;
+      --primary-hover: #172554;
+      --accent: #2563eb;
+      --sidebar-bg: #0f172a;
+      --sidebar-hover: #1e293b;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #d97706;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { display: flex; height: 100vh; background-color: var(--bg); color: var(--text); overflow: hidden; }
+
+    /* SIDEBAR */
+    #sidebar {
+      width: 270px;
+      background-color: var(--sidebar-bg);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      border-right: 1px solid #1e293b;
+      transition: width 0.2s ease;
+      position: relative;
+    }
+    body.sidebar-collapsed #sidebar { width: 72px; }
+    body.sidebar-collapsed #sidebar .brand-title,
+    body.sidebar-collapsed #sidebar .brand-sub,
+    body.sidebar-collapsed #sidebar .sidebar-footer,
+    body.sidebar-collapsed #sidebar .nav-link { display: none; }
+    .sidebar-toggle {
+      position: absolute;
+      top: 14px;
+      right: 12px;
+      width: 32px;
+      height: 32px;
+      border: 1px solid #475569;
+      border-radius: 6px;
+      background: #1e293b;
+      color: #fff;
+      cursor: pointer;
+      font-size: 18px;
+    }
+    body.sidebar-collapsed .sidebar-toggle { right: 20px; }
+    body.sidebar-collapsed #sidebar .brand-section { min-height: 62px; }
+    .brand-section {
+      padding: 22px 20px;
+      border-bottom: 1px solid #1e293b;
+    }
+    .brand-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #38bdf8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .brand-sub {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-top: 4px;
+    }
+    #sidebar ul { list-style: none; margin-top: 15px; }
+    #sidebar ul li a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px 20px;
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: 13.5px;
+      font-weight: 500;
+      transition: 0.15s ease;
+      cursor: pointer;
+    }
+    #sidebar ul li a:hover {
+      background-color: var(--sidebar-hover);
+      color: #ffffff;
+    }
+    #sidebar ul li a.active {
+      background-color: #1e293b;
+      color: #ffffff;
+      border-left: 4px solid var(--accent);
+      font-weight: 600;
+    }
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 16px 20px;
+      border-top: 1px solid #1e293b;
+      font-size: 11.5px;
+      color: #64748b;
+    }
+
+    /* MAIN CONTENT */
+    #main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .top-header {
+      background: white;
+      border-bottom: 1px solid var(--border);
+      padding: 14px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .station-badge-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      padding: 6px 14px;
+      border-radius: 20px;
+    }
+    .station-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+    .station-value {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    .edit-station-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 12px;
+      color: var(--accent);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .edit-station-btn:hover { text-decoration: underline; }
+
+    .content-viewport {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px;
+    }
+    #nominalColumnsModal { display: none; }
+    #nominalColumnsModal.active { display: flex; }
+
+    /* VIEWS */
+    .page-view { display: none; }
+    .page-view.active { display: block; animation: fadeIn 0.2s ease-in-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* COMPONENTS */
+    .card {
+      background: var(--card-bg);
+      border-radius: 8px;
+      padding: 22px;
+      border: 1px solid var(--border);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      margin-bottom: 22px;
+    }
+    .section-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .section-desc {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+
+    /* BUTTONS */
+    .btn {
+      background-color: var(--accent);
+      color: white;
+      border: none;
+      padding: 9px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s;
+    }
+    .btn:hover { background-color: #1d4ed8; }
+    .btn-secondary { background-color: #475569; }
+    .btn-secondary:hover { background-color: #334155; }
+    .btn-success { background-color: var(--success); }
+    .btn-success:hover { background-color: #15803d; }
+    .btn-danger { background-color: var(--danger); }
+    .btn-danger:hover { background-color: #b91c1c; }
+    .btn-outline {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-outline:hover { background: #f1f5f9; }
+
+    /* STATS CARDS */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: white;
+      border-radius: 8px;
+      padding: 18px 20px;
+      border: 1px solid var(--border);
+      border-left-width: 5px;
+    }
+    .stat-card .stat-title {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .stat-card .stat-num {
+      font-size: 28px;
+      font-weight: 800;
+      margin-top: 6px;
+    }
+
+    /* TABLES */
+    .table-container {
+      max-height: 520px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+    .application-table-scroll {
+      overflow-x: auto;
+      height: 16px;
+      margin-bottom: 6px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: #f8fafc;
+    }
+    .application-table-scroll-inner { height: 1px; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: left;
+    }
+    th {
+      background-color: #0f172a;
+      color: white;
+      padding: 12px 14px;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      font-weight: 600;
+    }
+    td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      background: white;
+    }
+    tr:hover td { background-color: #f8fafc; }
+
+    /* BADGES */
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11.5px;
+      font-weight: 700;
+    }
+    .badge-success { background: #dcfce7; color: #15803d; }
+    .badge-danger { background: #fee2e2; color: #b91c1c; }
+    .badge-warning { background: #fef3c7; color: #b45309; }
+    .badge-info { background: #e0f2fe; color: #0369a1; }
+
+    /* FORMS & INPUTS */
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-label {
+      display: block;
+      font-size: 12.5px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #334155;
+    }
+    .form-control {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 13px;
+      background: white;
+      color: var(--text);
+    }
+    .form-control:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(37,99,235,0.15);
+    }
+
+    /* MODAL */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-box {
+      background: white;
+      border-radius: 10px;
+      width: 520px;
+      max-width: 90vw;
+      padding: 24px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+    .modal-title { font-size: 18px; font-weight: 700; color: var(--text); }
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: var(--text-muted);
+    }
+
+    /* PRINT STYLES */
+    @media print {
+      #sidebar, .top-header, .no-print { display: none !important; }
+      body, #main-content, .content-viewport {
+        height: auto !important;
+        overflow: visible !important;
+        background: white !important;
+        padding: 0 !important;
+      }
+      .page-view { display: none !important; }
+      .page-view.active { display: block !important; }
+      .card { border: none !important; box-shadow: none !important; padding: 0 !important; }
+      th { background-color: #e2e8f0 !important; color: black !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SIDEBAR NAVIGATION -->
+  <nav id="sidebar">
+    <div class="brand-section">
+      <button id="sidebarToggle" class="sidebar-toggle no-print" type="button" title="Collapse menu" aria-label="Collapse menu">☰</button>
+      <div class="brand-title">Promotion Board</div>
+      <div class="brand-sub">Promotion & Scoring Portal</div>
+    </div>
+    <ul>
+      <li><a class="nav-link active" href="dashboard.html?page=welcome-page">🏠 Welcome Dashboard</a></li>
+      <li><a class="nav-link" href="nominal-roll.html">📋 1. Master Nominal Roll</a></li>
+      <li><a class="nav-link" href="applications-vetting.html">📑 2. Applications & Vetting</a></li>
+      <li><a class="nav-link" href="panel-scoring.html">📝 3. Panel Interview Scoring</a></li>
+      <li><a class="nav-link" href="merit-rankings.html">📊 4. Reports & Merit Rankings</a></li>
+    </ul>
+    <div class="brand-sub" style="padding:16px 18px 6px;">Regional Command</div>
+    <ul>
+      <li><a class="nav-link" href="rc-stations-scores.html">🏢 1. RC Station Scores</a></li>
+      <li><a class="nav-link" href="regional-boards.html">🏛️ 2. Regional Boards Scores</a></li>
+      <li><a class="nav-link" href="final-scores.html">🏆 3. Final Scores</a></li>
+    </ul>
+    <div class="sidebar-footer">
+      <div>Promotion Cycle: <strong id="sidebarYear">01/2026</strong></div>
+    </div>
+  </nav>
+
+  <!-- MAIN APP CONTAINER -->
+  <main id="main-content">
+    
+    <!-- TOP STATUS BAR -->
+    <header class="top-header no-print">
+      <div>
+        <h3 id="topHeaderTitle" style="font-size: 16px; font-weight: 600;">Embu Main Prison - Promotion Portal (<span id="promotionPeriodDisplay">01/2026</span>)</h3>
+      </div>
+      <div class="station-badge-wrapper">
+        <span class="station-label">Active Station:</span>
+        <span class="station-value" id="globalStationDisplay">EMBU MAIN PRISON</span>
+        <button class="edit-station-btn" onclick="openStationModal()">✏️ Edit</button>
+      </div>
+    </header>
+
+    <!-- CONTENT VIEWPORT -->
+    <div class="content-viewport">
+
+      <!-- ============================================== -->
+      <!-- PAGE 1: WELCOME DASHBOARD                      -->
+      <!-- ============================================== -->
+      <section id="welcome-page" class="page-view active">
+        <!-- Hero Card -->
+        <div style="background: linear-gradient(135deg, #1e3a8a, #0f172a); color: white; padding: 28px; border-radius: 10px; margin-bottom: 24px;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+              <h1 style="font-size: 26px; font-weight: 700; margin-bottom: 8px;">Promotion Interview Portal</h1>
+              <p style="opacity: 0.85; font-size: 14px;">Official candidate vetting, 3-year disciplinary tracking, live panel scoring, and automated merit ranking.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Statistics Counters -->
+        <div class="stats-grid">
+          <div class="stat-card" style="border-left-color: #1e3a8a;">
+            <div class="stat-title">Master Nominal Roll</div>
+            <div class="stat-num" id="dash-nominal-count" style="color: #1e3a8a;">--</div>
+          </div>
+          <div class="stat-card" style="border-left-color: #2563eb;">
+            <div class="stat-title">Candidates Applied</div>
+            <div class="stat-num" id="dash-apps-count" style="color: #2563eb;">--</div>
+          </div>
+          <div class="stat-card" style="border-left-color: #16a34a;">
+            <div class="stat-title">Qualified for Interview</div>
+            <div class="stat-num" id="dash-qualified-count" style="color: #16a34a;">--</div>
+          </div>
+          <div class="stat-card" style="border-left-color: #dc2626;">
+            <div class="stat-title">Disqualified / Flagged</div>
+            <div class="stat-num" id="dash-disqualified-count" style="color: #dc2626;">--</div>
+          </div>
+          <div class="stat-card" style="border-left-color: #d97706;">
+            <div class="stat-title">Scored Interviews</div>
+            <div class="stat-num" id="dash-scored-count" style="color: #d97706;">--</div>
+          </div>
+        </div>
+
+        <!-- Workflow Module Cards -->
+        <h3 style="font-size: 16px; margin-bottom: 14px;">Workflow Steps</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; margin-bottom: 24px;">
+          <div class="card" style="cursor: pointer;" onclick="navigateTo('nominal-page', document.querySelectorAll('.nav-link')[1])">
+            <h4 style="color: #2563eb; margin-bottom: 6px;">Step 1: Nominal Roll →</h4>
+            <p style="font-size: 13px; color: var(--text-muted);">Import and manage officer roster, ranks, enlistment dates, and stations.</p>
+          </div>
+          <div class="card" style="cursor: pointer;" onclick="navigateTo('applications-page', document.querySelectorAll('.nav-link')[2])">
+            <h4 style="color: #0d9488; margin-bottom: 6px;">Step 2: Applications & Vetting →</h4>
+            <p style="font-size: 13px; color: var(--text-muted);">Filter applicants by target rank and vet disciplinary offences against the 3-year rule.</p>
+          </div>
+          <div class="card" style="cursor: pointer;" onclick="navigateTo('scoring-page', document.querySelectorAll('.nav-link')[3])">
+            <h4 style="color: #16a34a; margin-bottom: 6px;">Step 3: Panel Scoring →</h4>
+            <p style="font-size: 13px; color: var(--text-muted);">Grade candidates live across all 7 criteria or generate blank printable score sheets.</p>
+          </div>
+          <div class="card" style="cursor: pointer;" onclick="navigateTo('reports-page', document.querySelectorAll('.nav-link')[4])">
+            <h4 style="color: #475569; margin-bottom: 6px;">Step 4: Merit Rankings →</h4>
+            <p style="font-size: 13px; color: var(--text-muted);">View calculated standings, merit positions, and export official board minutes.</p>
+          </div>
+        </div>
+
+        <!-- Rank Breakdown Table -->
+        <div class="card">
+          <h3 style="font-size: 16px; margin-bottom: 12px;">Candidate Status Summary by Rank</h3>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Target Rank Applied For</th>
+                  <th>Total Candidates</th>
+                  <th>Qualified</th>
+                  <th>Pending / Disqualified</th>
+                </tr>
+              </thead>
+              <tbody id="dashRankSummaryBody">
+                <tr><td colspan="4" style="text-align: center; color: var(--text-muted);">Loading rank statistics...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="rc-stations-page" class="page-view">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;"><div><h2 class="section-title">RC Station Scores</h2><p class="section-desc">Consolidate station board results. Import station result files and review candidates.</p></div></div>
+        <div class="card"><div style="display:flex;gap:14px;align-items:center;">
+          <label class="form-label" style="margin:0;">Import Station Results:</label>
+          <input id="regionalFilesInput" type="file" accept=".xlsx,.xls" multiple class="form-control" style="width:240px;">
+          <label class="form-label" style="margin:0;">Station Name:</label>
+          <input id="regionalStationInput" type="text" class="form-control" style="width:160px;" placeholder="Optional override">
+          <button class="btn" onclick="importRegionalFiles('STATION')">Import</button>
+          
+          <label class="form-label" style="margin:0;margin-left:auto;">Target Rank:</label>
+          <select id="regionalRankFilter" class="form-control" style="width:160px;" onchange="loadRegionalCandidates('STATION')"><option value="ALL">All Ranks</option></select>
+          <input type="text" id="regionalSearchInput" class="form-control" style="width:200px;" placeholder="Search Candidates..." oninput="debounceRegionalSearch()">
+        </div></div>
+        <div class="card"><div id="regionalTableTopScroll" class="application-table-scroll"><div id="regionalTableTopScrollInner" class="application-table-scroll-inner"></div></div><div id="regionalTableContainer" class="table-container"><table><thead><tr><th>Serial</th><th>PF Number</th><th>Name</th><th>Station</th><th>Current Rank</th><th>Target Rank</th><th>Highest Education</th><th>Station Total</th><th>Regional Total</th></tr></thead><tbody id="regionalCandidatesBody"><tr><td colspan="9" style="text-align:center;color:var(--text-muted);">No station submissions imported into the Regional Command workspace.</td></tr></tbody></table></div></div>
+      </section>
+
+      <section id="regional-boards-page" class="page-view">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;"><div><h2 class="section-title">Regional Boards Scores</h2><p class="section-desc">Interviews done at the regional end. Specify board number and station name when importing.</p></div></div>
+        <div class="card"><div style="display:flex;gap:14px;align-items:center;">
+          <label class="form-label" style="margin:0;">Import Board Results:</label>
+          <input id="rbFilesInput" type="file" accept=".xlsx,.xls" multiple class="form-control" style="width:240px;">
+          <label class="form-label" style="margin:0;">Board No:</label>
+          <input id="rbBoardInput" type="text" class="form-control" style="width:100px;">
+          <label class="form-label" style="margin:0;">Station Name:</label>
+          <input id="rbStationInput" type="text" class="form-control" style="width:140px;">
+          <button class="btn" onclick="importRegionalFiles('REGIONAL')">Import</button>
+          
+          <label class="form-label" style="margin:0;margin-left:auto;">Target Rank:</label>
+          <select id="rbRankFilter" class="form-control" style="width:120px;" onchange="loadRegionalCandidates('REGIONAL')"><option value="ALL">All Ranks</option></select>
+          <input type="text" id="rbSearchInput" class="form-control" style="width:160px;" placeholder="Search Candidates..." oninput="debounceRbSearch()">
+        </div></div>
+        <div class="card"><div class="table-container"><table><thead><tr><th>Serial</th><th>Board No</th><th>PF Number</th><th>Name</th><th>Station</th><th>Current Rank</th><th>Target Rank</th><th>Highest Education</th><th>Regional Total</th></tr></thead><tbody id="rbCandidatesBody"><tr><td colspan="9" style="text-align:center;color:var(--text-muted);">No regional board submissions imported.</td></tr></tbody></table></div></div>
+      </section>
+
+      <section id="final-scores-page" class="page-view">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
+          <div><h2 class="section-title">Final Scores (Combined)</h2><p class="section-desc">Consolidated list of all candidates from Station Boards and Regional Boards.</p></div>
+          <button class="btn btn-secondary" onclick="exportFinalScores()">Export to Excel</button>
+        </div>
+        <div class="card"><div style="display:flex;gap:14px;align-items:center;">
+          <label class="form-label" style="margin:0;margin-left:auto;">Target Rank:</label>
+          <select id="fsRankFilter" class="form-control" style="width:160px;" onchange="loadFinalScores()"><option value="ALL">All Ranks</option></select>
+          <input type="text" id="fsSearchInput" class="form-control" style="width:240px;" placeholder="Search Candidates..." oninput="debounceFsSearch()">
+        </div></div>
+        <div class="card"><div class="table-container"><table><thead><tr><th>Serial</th><th>Source</th><th>Board No</th><th>PF Number</th><th>Name</th><th>Station</th><th>Current Rank</th><th>Target Rank</th><th>Final Regional Total</th></tr></thead><tbody id="fsCandidatesBody"><tr><td colspan="9" style="text-align:center;color:var(--text-muted);">Loading final scores...</td></tr></tbody></table></div></div>
+      </section>
+
+      <div id="applicationColumnsModal" class="modal-overlay">
+        <div class="modal-box" style="max-width: 720px;">
+          <div class="modal-header">
+            <h3 class="modal-title">Eligibility Columns</h3>
+            <button class="modal-close" onclick="closeApplicationColumnsModal()">✕</button>
+          </div>
+          <p class="section-desc" style="margin-bottom:16px;">Select or deselect columns shown in the eligibility list. PF Number, Name, and Status stay visible.</p>
+          <div id="applicationColumnsGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;"></div>
+          <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:18px;">
+            <button class="btn btn-secondary" onclick="showAllApplicationColumns()">Show All</button>
+            <button class="btn" onclick="saveApplicationColumns()">Save Columns</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================== -->
+      <section id="nominal-page" class="page-view">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+          <div>
+            <h2 class="section-title">Step 1: Master Nominal Roll</h2>
+            <p class="section-desc">Manage the comprehensive staff roster for the station or regional command.</p>
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <button class="btn btn-secondary" onclick="openAddOfficerModal()">➕ Add Officer Manually</button>
+          </div>
+        </div>
+
+        <!-- Excel Upload Card -->
+        <div class="card">
+          <h3 style="font-size: 15px; margin-bottom: 12px;">Import Roster from Excel (.xlsx, .xls)</h3>
+          <div style="display: grid; grid-template-columns: 2fr 1fr auto; gap: 14px; align-items: end;">
+            <div>
+              <label class="form-label">Choose Master Nominal Roll File:</label>
+              <input type="file" id="nominalRollFileInput" accept=".xlsx, .xls" class="form-control">
+            </div>
+            <div>
+              <label class="form-label">Station Assignment:</label>
+              <input type="text" id="nominalImportStation" class="form-control" value="EMBU MAIN PRISON">
+            </div>
+            <div>
+              <button class="btn" onclick="handleImportNominalRoll()">📥 Process & Import</button>
+            </div>
+          </div>
+          <div id="nominalUploadStatus" style="margin-top: 10px; font-size: 13px; font-weight: 600;"></div>
+        </div>
+
+        <!-- Roster Data Viewer Card -->
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+            <h3 style="font-size: 15px;">Station Staff Directory (<span id="nominalTableCount">0</span> officers)</h3>
+            <div style="display: flex; gap: 10px;">
+              <select id="nominalStationFilter" class="form-control" style="width: 200px;" onchange="loadNominalRollTable()">
+                <option value="ALL">All Stations</option>
+                <option value="EMBU MAIN PRISON" selected>Embu Main Prison</option>
+              </select>
+              <input type="text" id="nominalSearchInput" class="form-control" style="width: 240px;" placeholder="Search PF No. or Name..." oninput="debounceNominalSearch()">
+              <button class="btn btn-secondary" type="button" onclick="openNominalColumnsModal()">Columns</button>
+            </div>
+          </div>
+
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th data-nominal-column="serial" onclick="sortNominalColumn(0)">Serial Number</th>
+                  <th data-nominal-column="pf" onclick="sortNominalColumn(1)">PF Number</th>
+                  <th data-nominal-column="name" onclick="sortNominalColumn(2)">Full Name</th>
+                  <th data-nominal-column="rank" onclick="sortNominalColumn(3)">Current Rank</th>
+                  <th data-nominal-column="gender" onclick="sortNominalColumn(4)">Gender</th>
+                  <th data-nominal-column="ethnicity" onclick="sortNominalColumn(5)">Ethnicity</th>
+                  <th data-nominal-column="yob" onclick="sortNominalColumn(6)">Y.O.B.</th>
+                  <th data-nominal-column="academic" onclick="sortNominalColumn(7)">Academic Qualification</th>
+                  <th data-nominal-column="professional" onclick="sortNominalColumn(8)">Professional Qualification</th>
+                  <th data-nominal-column="enlisted" onclick="sortNominalColumn(9)">Year Enlisted</th>
+                  <th data-nominal-column="posted" onclick="sortNominalColumn(10)">Date Posted</th>
+                  <th data-nominal-column="section" onclick="sortNominalColumn(11)">Section</th>
+                  <th data-nominal-column="county" onclick="sortNominalColumn(12)">Home County</th>
+                  <th data-nominal-column="station" onclick="sortNominalColumn(13)">Station</th>
+                  <th class="no-print" data-nominal-column="actions" onclick="sortNominalColumn(14)">Action</th>
+                </tr>
+              </thead>
+              <tbody id="nominalTableBody">
+                <tr><td colspan="15" style="text-align: center; color: var(--text-muted);">Loading nominal roll...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <div id="nominalColumnsModal" class="modal-overlay">
+        <div class="modal-box" style="max-width: 720px;">
+          <span class="close" onclick="closeNominalColumnsModal()">&times;</span>
+          <h3 class="modal-title">Nominal Roll Columns</h3>
+          <p class="section-desc" style="margin-bottom: 16px;">Select or deselect columns shown in the nominal roll.</p>
+          <div id="nominalColumnsGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px;"></div>
+          <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px;">
+            <button class="btn btn-secondary" onclick="showAllNominalColumns()">Show All</button>
+            <button class="btn" onclick="saveNominalColumns()">Save Columns</button>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- ============================================== -->
+      <!-- PAGE 3: APPLICATIONS & DISCIPLINARY VETTING    -->
+      <!-- ============================================== -->
+      <section id="applications-page" class="page-view">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+          <div>
+            <h2 class="section-title">Step 2: Candidate Applications & Disciplinary Vetting</h2>
+            <p class="section-desc">Select officers from the Master Nominal Roll, specify promotion target ranks, and evaluate eligibility.</p>
+            <p class="section-desc" style="margin-top:6px;"><strong id="nominalSourceCount">Loading nominal roll...</strong> available from Nominal Roll; <strong id="selectedApplicantCount">0</strong> selected as applicants.</p>
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <button class="btn" onclick="openNominalApplicantSelector()">☑ Select Applicants from Nominal Roll</button>
+            <button class="btn btn-secondary" onclick="generateEligibilityLists()">Generate Eligibility Lists</button>
+            <button class="btn btn-secondary" onclick="exportEligibilityLists()">Export Eligibility Lists to Excel</button>
+            <button class="btn btn-secondary" onclick="clearApplicationList()">Clear Application List</button>
+          </div>
+          <div id="applicantUploadStatus" style="margin-top: 10px; font-size: 13px; font-weight: 600;"></div>
+        </div>
+
+        <div class="card no-print">
+          <h3 style="font-size: 15px; margin-bottom: 12px;">HQ Eligibility Criteria</h3>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; align-items:end;">
+            <div><label class="form-label">Minimum Years in Service</label><input type="number" id="criteriaYearsService" class="form-control" min="0"></div>
+            <div><label class="form-label">Minimum Years in Current Rank</label><input type="number" id="criteriaYearsRank" class="form-control" min="0"></div>
+            <div><label class="form-label">Clean Record Period (Years)</label><input type="number" id="criteriaCleanYears" class="form-control" min="0"></div>
+            <button class="btn" onclick="saveEligibilityCriteria()">Save Criteria</button>
+          </div>
+          <div id="criteriaStatus" style="margin-top:10px; font-size:13px;"></div>
+        </div>
+
+        <!-- Applicant Records Table -->
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+            <div style="display: flex; gap: 12px; align-items: center;">
+              <h3 style="font-size: 15px;">Candidates List (<span id="appsTableCount">0</span>)</h3>
+              <select id="appsFilterRank" class="form-control" style="width: 220px;" onchange="loadApplicationsTable()">
+                <option value="ALL">All Ranks Applied For</option>
+                <option value="CPL">Corporal (CPL)</option>
+                <option value="SGT">Sergeant (SGT)</option>
+                <option value="S/SGT">Senior Sergeant (S/SGT)</option>
+                <option value="IP">Inspector (IP)</option>
+                <option value="CIP">CIP</option><option value="ASP">ASP</option><option value="SP">SP</option>
+                <option value="SSP">SSP</option><option value="CP">CP</option><option value="ACGP">ACGP</option>
+                <option value="SACGP">SACGP</option><option value="DCGP">DCGP</option><option value="CGP">CGP</option>
+              </select>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <input type="text" id="appsSearchInput" class="form-control" style="width: 240px;" placeholder="Search PF or Name..." oninput="debounceAppsSearch()">
+              <button class="btn btn-secondary" type="button" onclick="openApplicationColumnsModal()">Columns</button>
+            </div>
+          </div>
+
+          <div id="applicationTableTopScroll" class="application-table-scroll" aria-label="Top horizontal scrollbar for applications"><div id="applicationTableTopScrollInner" class="application-table-scroll-inner"></div></div>
+        </div>
+      </section>
+
+
+      <!-- ============================================== -->
+      <!-- PAGE 4: PANEL INTERVIEW SCORING                -->
+      <!-- ============================================== -->
+      <section id="scoring-page" class="page-view">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+          <div>
+            <h2 class="section-title">Step 3: Panel Interview Scoresheet</h2>
+            <p class="section-desc">Grade candidates during the promotion board interviews across standard evaluation criteria.</p>
+          </div>
+          <div style="display:flex;gap:10px;">
+            <button class="btn btn-secondary no-print" onclick="openScoringTemplateModal()">Edit Score Sheet</button>
+            <button class="btn btn-secondary no-print" onclick="exportScoreSheets('candidate')">Export Candidate to Word</button>
+            <button class="btn btn-secondary no-print" onclick="exportScoreSheets('rank')">Export Rank to Word</button>
+            <button class="btn btn-secondary no-print" onclick="exportScoreSheets('all')">Export All to Word</button>
+            <button class="btn btn-outline no-print" onclick="window.print()">🖨️ Print Blank / Completed Scoresheet</button>
+          </div>
+        </div>
+
+        <!-- Candidate Selection Header -->
+        <div class="card no-print">
+          <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 20px; align-items: end;">
+            <div>
+              <label class="form-label">1. Select Rank Interviewed For:</label>
+              <select id="scoringRankSelect" class="form-control" onchange="loadScoringCandidates()">
+                <option value="CPL">Corporal (CPL)</option>
+                <option value="SGT">Sergeant (SGT)</option>
+                <option value="S/SGT">Senior Sergeant (S/SGT)</option>
+                <option value="IP">Inspector (IP)</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label">2. Select Qualified Candidate:</label>
+              <select id="scoringCandidateSelect" class="form-control" onchange="loadCandidateScoreForm()">
+                <option value="">-- Choose Candidate to Score --</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Scoresheet Form & Candidate Profile -->
+        <div id="scoringFormContainer" style="display: none;">
+          
+          <!-- Candidate Brief Profile -->
+          <div class="card" style="background: #f8fafc; border-left: 5px solid var(--accent);">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px;">
+              <div>
+                <span style="font-size: 11.5px; color: var(--text-muted); text-transform: uppercase;">PF Number:</span>
+                <div id="scorePfDisplay" style="font-size: 16px; font-weight: 700;">--</div>
+              </div>
+              <div>
+                <span style="font-size: 11.5px; color: var(--text-muted); text-transform: uppercase;">Officer Name:</span>
+                <div id="scoreNameDisplay" style="font-size: 16px; font-weight: 700;">--</div>
+              </div>
+              <div>
+                <span style="font-size: 11.5px; color: var(--text-muted); text-transform: uppercase;">Current Rank & Station:</span>
+                <div id="scoreRankStationDisplay" style="font-size: 14px; font-weight: 600;">--</div>
+              </div>
+              <div>
+                <span style="font-size: 11.5px; color: var(--text-muted); text-transform: uppercase;">Interview For:</span>
+                <div id="scoreTargetRankDisplay" style="font-size: 15px; font-weight: 700; color: var(--accent);">--</div>
+              </div>
+              <div>
+                <span style="font-size: 11.5px; color: var(--text-muted); text-transform: uppercase;">Disciplinary Status:</span>
+                <div id="scoreDisciplinaryBadge" style="margin-top: 2px;">--</div>
+              </div>
+              <div><span style="font-size: 11.5px; color: var(--text-muted); text-transform: uppercase;">Section Deployed:</span><div id="scoreSectionDisplay" style="font-size:14px;font-weight:600;">--</div></div>
+              <div><span style="font-size: 11.5px; color: var(--text-muted); text-transform: uppercase;">Gender:</span><div id="scoreGenderDisplay" style="font-size:14px;font-weight:600;">--</div></div>
+              <div><span style="font-size: 11.5px; color: var(--text-muted); text-transform: uppercase;">Ethnicity:</span><div id="scoreEthnicityDisplay" style="font-size:14px;font-weight:600;">--</div></div>
+            </div>
+          </div>
+
+          <!-- Criteria Rubric Table -->
+          <div class="card">
+            <h3 style="font-size: 16px; margin-bottom: 14px;">Interview Rubric Matrix & Live Grading</h3>
+            
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width: 50px;">#</th>
+                    <th>Assessment Criteria</th>
+                    <th style="width: 130px; text-align: center;">Max Marks</th>
+                    <th style="width: 160px; text-align: center;">Awarded Score</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>1</strong></td>
+                    <td>
+                       <strong id="score_label_education">Education</strong>
+                       <div id="score_hint_education" style="font-size: 11.5px; color: var(--text-muted);">See education appendix</div>
+                    </td>
+                     <td id="score_max_education" style="text-align: center; font-weight: 600;">20</td>
+                    <td style="text-align: center;">
+                       <input type="number" id="score_education" class="form-control" style="text-align: center; font-weight: 700;" min="0" max="20" step="0.5" value="0" oninput="calculateLiveTotal()">
+                    </td>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      <div class="form-group">
+        <label class="form-label">Date of Last Promotion (PC: N/A):</label>
+        <input type="date" id="app_last_promotion_date" class="form-control">
+      </div>
+        <div class="form-group">
+          <label class="form-label">Date of Last Offence (if any):</label>
+          <input type="date" id="app_last_offence_date" class="form-control">
+        </div>
+      </div>
+      <p style="font-size: 11.5px; color: var(--text-muted); margin-bottom: 14px;">
+        * Note: Offences within the last 3 years will automatically flag candidate with 0 marks for clean record conduct.
+      </p>
+      <div style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button class="btn btn-outline" onclick="closeAppModal()">Cancel</button>
+        <button class="btn btn-success" onclick="saveNewApplication()">Submit Application</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="nominalApplicantModal" class="modal-overlay">
+    <div class="modal-box" style="max-width: 900px; max-height: 88vh;">
+      <div class="modal-header">
+        <h3 class="modal-title">Select Officers Who Applied</h3>
+        <button class="modal-close" onclick="closeNominalApplicantSelector()">✕</button>
+      </div>
+      <p class="section-desc">Tick every officer who submitted an application. Only selected officers will appear in Step 2.</p>
+      <input id="nominalApplicantSearch" class="form-control" placeholder="Search PF number, name, or rank..." style="margin:14px 0;" oninput="filterNominalApplicantChoices()">
+      <div id="nominalApplicantChoices" style="max-height:52vh; overflow:auto; border:1px solid var(--border); border-radius:6px;"></div>
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
+        <button class="btn btn-secondary" onclick="closeNominalApplicantSelector()">Cancel</button>
+        <button class="btn" onclick="saveNominalApplicantSelection()">Add Selected Applicants</button>
+      </div>
+    </div>
+  </div>
+<div id="editCandidateModal" class="modal-overlay">
+  <div class="modal-box" style="width: 500px;">
+    <div class="modal-header">
+      <h3 class="modal-title">Edit Candidate Details</h3>
+      <button class="modal-close" onclick="closeEditCandidateModal()">✕</button>
+    </div>
+    <input type="hidden" id="edit_candidate_pf">
+    <div class="form-group">
+      <label class="form-label">Candidate Name:</label>
+      <input type="text" id="edit_candidate_name" class="form-control">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Rank Applied For:</label>
+      <select id="edit_candidate_target_rank" class="form-control">
+        <option value="CORPORAL (CPL)">Corporal (CPL)</option>
+        <option value="SERGEANT (SGT)">Sergeant (SGT)</option>
+        <option value="SENIOR SERGEANT (S/SGT)">Senior Sergeant (S/SGT)</option>
+        <option value="DUTY OFFICER / INSPECTOR">Inspector (IP)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Date Last Promoted:</label>
+      <input type="date" id="edit_candidate_last_promoted" class="form-control">
+    </div>
+    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px;">
+      <button class="btn btn-outline" onclick="closeEditCandidateModal()">Cancel</button>
+      <button class="btn btn-success" onclick="saveCandidateEdit()">Save Changes</button>
+    </div>
+  </div>
+</div>
+  <script src="renderer.js"></script>
+</body>
+</html>
+

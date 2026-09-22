@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Tools - Promotion Portal</title>
+  <style>
+    :root {
+      --primary: #1e3a8a; --primary-hover: #172554; --accent: #2563eb;
+      --sidebar-bg: #0f172a; --sidebar-hover: #1e293b; --bg: #f8fafc;
+      --card-bg: #ffffff; --text: #0f172a; --text-muted: #64748b;
+      --border: #e2e8f0; --success: #16a34a; --danger: #dc2626; --warning: #d97706;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+    body { display: flex; height: 100vh; background-color: var(--bg); color: var(--text); overflow: hidden; }
+
+    #sidebar { width: 270px; background-color: var(--sidebar-bg); color: white; display: flex; flex-direction: column; flex-shrink: 0; border-right: 1px solid #1e293b; transition: width 0.2s ease; position: relative; }
+    body.sidebar-collapsed #sidebar { width: 72px; }
+    body.sidebar-collapsed #sidebar .brand-title, body.sidebar-collapsed #sidebar .brand-sub, body.sidebar-collapsed #sidebar .sidebar-footer, body.sidebar-collapsed #sidebar .nav-link { display: none; }
+    .sidebar-toggle { position: absolute; top: 14px; right: 12px; width: 32px; height: 32px; border: 1px solid #475569; border-radius: 6px; background: #1e293b; color: #fff; cursor: pointer; font-size: 18px; }
+    body.sidebar-collapsed .sidebar-toggle { right: 20px; }
+    .brand-section { padding: 22px 20px; border-bottom: 1px solid #1e293b; min-height: 62px; }
+    .brand-title { font-size: 16px; font-weight: 700; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.5px; }
+    .brand-sub { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+    #sidebar ul { list-style: none; margin-top: 15px; }
+    #sidebar ul li a { display: flex; align-items: center; gap: 12px; padding: 13px 20px; color: #94a3b8; text-decoration: none; font-size: 13.5px; font-weight: 500; transition: 0.15s ease; cursor: pointer; }
+    #sidebar ul li a:hover { background-color: var(--sidebar-hover); color: #ffffff; }
+    #sidebar ul li a.active { background-color: #1e293b; color: #ffffff; border-left: 4px solid var(--accent); font-weight: 600; }
+    .sidebar-footer { margin-top: auto; padding: 16px 20px; border-top: 1px solid #1e293b; font-size: 11.5px; color: #64748b; }
+
+    #main-content { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow: auto; }
+    .top-header { background: white; border-bottom: 1px solid var(--border); padding: 14px 28px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+    
+    .content-viewport { padding: 28px; max-width: 1000px; margin: 0 auto; width: 100%; }
+    
+    .card { background: var(--card-bg); border-radius: 8px; padding: 22px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.04); margin-bottom: 22px; }
+    .section-title { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .section-desc { font-size: 13.5px; color: var(--text-muted); margin-bottom: 20px; }
+    
+    .btn { background-color: var(--accent); color: white; border: none; padding: 9px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; transition: background 0.15s; }
+    .btn:hover { background-color: #1d4ed8; }
+    .btn-secondary { background-color: #475569; }
+    .btn-secondary:hover { background-color: #334155; }
+    .btn-danger { background-color: var(--danger); }
+    .btn-danger:hover { background-color: #b91c1c; }
+
+    .danger-zone { border: 2px dashed var(--danger); border-radius: 8px; padding: 24px; background: #fef2f2; }
+    .danger-zone h2 { color: #b91c1c; margin-bottom: 8px; font-size: 18px; }
+    .danger-note { color: #991b1b; font-size: 13.5px; margin-bottom: 16px; line-height: 1.5; }
+    
+    .table-cleanup-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-top: 16px; }
+    .cleanup-group { border: 1px solid #fca5a5; border-radius: 8px; padding: 14px; background: #ffffff; }
+    .cleanup-group h3 { margin: 0 0 10px; font-size: 14px; color: #7f1d1d; font-weight: 700; border-bottom: 1px solid #fecaca; padding-bottom: 6px; }
+    .cleanup-option { display: flex; align-items: center; gap: 8px; margin: 8px 0; font-size: 13.5px; color: #450a0a; cursor: pointer; }
+    .cleanup-option input[type="checkbox"] { transform: scale(1.1); cursor: pointer; }
+  </style>
+</head>
+<body>
+
+  <!-- SIDEBAR NAVIGATION -->
+  <nav id="sidebar">
+    <div class="brand-section">
+      <button id="sidebarToggle" class="sidebar-toggle" type="button">☰</button>
+      <div class="brand-title">Promotion Board</div>
+      <div class="brand-sub">Promotion & Scoring Portal</div>
+    </div>
+    <ul>
+      <li><a class="nav-link" href="dashboard.html">🏠 Welcome Dashboard</a></li>
+      <li><a class="nav-link" href="nominal-roll.html">📋 1. Master Nominal Roll</a></li>
+      <li><a class="nav-link" href="applications-vetting.html">📑 2. Applications & Vetting</a></li>
+      <li><a class="nav-link" href="panel-scoring.html">📝 3. Panel Interview Scoring</a></li>
+      <li><a class="nav-link" href="merit-rankings.html">📊 4. Reports & Merit Rankings</a></li>
+      <div style="margin-top: 15px; font-size: 11px; text-transform: uppercase; color: var(--text-muted); padding-left: 20px; font-weight: 700;">Regional Command Group</div>
+      <ul style="margin-top: 5px;">
+        <li><a class="nav-link" href="rc-dashboard.html">📊 Regional Dashboard</a></li>
+        <li><a class="nav-link" href="rc-stations-scores.html">📥 1. Receive Station Results</a></li>
+        <li><a class="nav-link" href="regional-boards.html">🎯 2. Board Selection & Cut-offs</a></li>
+        <li><a class="nav-link" href="regional-scoring.html">⚖️ 3. Panel Interview Scoring</a></li>
+        <li><a class="nav-link" href="final-scores.html">🏆 4. Final Merit & Details</a></li>
+      </ul>
+      <div style="margin-top: 15px; font-size: 11px; text-transform: uppercase; color: var(--text-muted); padding-left: 20px; font-weight: 700;">System Admin</div>
+      <ul style="margin-top: 5px;">
+        <li><a class="nav-link active" href="system-tools.html">⚠️ System & Data Cleanup</a></li>
+      </ul>
+    </ul>
+    <div class="sidebar-footer">
+      <div>Promotion Cycle: <strong id="sidebarYear">01/2026</strong></div>
+    </div>
+  </nav>
+
+  <!-- MAIN APP CONTAINER -->
+  <main id="main-content">
+    <header class="top-header">
+      <div><h3 style="font-size: 16px; font-weight: 600;">System Maintenance & Tools</h3></div>
+    </header>
+
+    <div class="content-viewport">
+      <div>
+        <h2 class="section-title">System Tools & Maintenance</h2>
+        <p class="section-desc">Manage system databases, clear out old cycle data, and prepare the software for a new session.</p>
+      </div>
+
+      <div class="danger-zone">
+        <h2>⚠️ Danger Zone: Targeted Data Cleanup</h2>
+        <p class="danger-note">
+          Selecting and deleting tables below will permanently erase all candidate applications, interview scores, or demographic records stored in them. The table structure will remain intact so you can start a fresh promotion cycle, but the data cannot be recovered once deleted.
+        </p>
+        
+        <div style="display: flex; gap: 10px; margin-bottom: 16px;">
+          <button class="btn btn-secondary" onclick="loadCleanupTables()">1. Load Available Tables</button>
+          <button class="btn btn-danger" onclick="deleteSelectedTables()">2. Erase Selected Tables</button>
+        </div>
+
+        <div id="cleanupStatus" style="font-weight: 600; font-size: 13px; color: var(--danger); margin-bottom: 10px;"></div>
+        
+        <div id="cleanupTables" class="table-cleanup-grid">
+          <!-- Tables will render here -->
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

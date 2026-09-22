@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Promotion Interview Portal</title>
+  <style>
+    :root {
+      --primary: #1e3a8a;
+      --primary-hover: #172554;
+      --accent: #2563eb;
+      --sidebar-bg: #0f172a;
+      --sidebar-hover: #1e293b;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #d97706;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { display: flex; height: 100vh; background-color: var(--bg); color: var(--text); overflow: hidden; }
+
+    /* SIDEBAR */
+    #sidebar {
+      width: 270px;
+      background-color: var(--sidebar-bg);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      border-right: 1px solid #1e293b;
+      transition: width 0.2s ease;
+      position: relative;
+    }
+    body.sidebar-collapsed #sidebar { width: 72px; }
+    body.sidebar-collapsed #sidebar .brand-title,
+    body.sidebar-collapsed #sidebar .brand-sub,
+    body.sidebar-collapsed #sidebar .sidebar-footer,
+    body.sidebar-collapsed #sidebar .nav-link { display: none; }
+    .sidebar-toggle {
+      position: absolute;
+      top: 14px;
+      right: 12px;
+      width: 32px;
+      height: 32px;
+      border: 1px solid #475569;
+      border-radius: 6px;
+      background: #1e293b;
+      color: #fff;
+      cursor: pointer;
+      font-size: 18px;
+    }
+    body.sidebar-collapsed .sidebar-toggle { right: 20px; }
+    body.sidebar-collapsed #sidebar .brand-section { min-height: 62px; }
+    .brand-section {
+      padding: 22px 20px;
+      border-bottom: 1px solid #1e293b;
+    }
+    .brand-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #38bdf8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .brand-sub {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-top: 4px;
+    }
+    #sidebar ul { list-style: none; margin-top: 15px; }
+    #sidebar ul li a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px 20px;
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: 13.5px;
+      font-weight: 500;
+      transition: 0.15s ease;
+      cursor: pointer;
+    }
+    #sidebar ul li a:hover {
+      background-color: var(--sidebar-hover);
+      color: #ffffff;
+    }
+    #sidebar ul li a.active {
+      background-color: #1e293b;
+      color: #ffffff;
+      border-left: 4px solid var(--accent);
+      font-weight: 600;
+    }
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 16px 20px;
+      border-top: 1px solid #1e293b;
+      font-size: 11.5px;
+      color: #64748b;
+    }
+
+    /* MAIN CONTENT */
+    #main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .top-header {
+      background: white;
+      border-bottom: 1px solid var(--border);
+      padding: 14px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .station-badge-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      padding: 6px 14px;
+      border-radius: 20px;
+    }
+    .station-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+    .station-value {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    .edit-station-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 12px;
+      color: var(--accent);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .edit-station-btn:hover { text-decoration: underline; }
+
+    .content-viewport {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px;
+    }
+
+    /* VIEWS */
+    .page-view { display: none; }
+    .page-view.active { display: block; animation: fadeIn 0.2s ease-in-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* COMPONENTS */
+    .card {
+      background: var(--card-bg);
+      border-radius: 8px;
+      padding: 22px;
+      border: 1px solid var(--border);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      margin-bottom: 22px;
+    }
+    .section-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .section-desc {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+
+    /* BUTTONS */
+    .btn {
+      background-color: var(--accent);
+      color: white;
+      border: none;
+      padding: 9px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s;
+    }
+    .btn:hover { background-color: #1d4ed8; }
+    .btn-secondary { background-color: #475569; }
+    .btn-secondary:hover { background-color: #334155; }
+    .btn-success { background-color: var(--success); }
+    .btn-success:hover { background-color: #15803d; }
+    .btn-outline {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-outline:hover { background: #f1f5f9; }
+
+    /* TABLES */
+    .table-container {
+      max-height: 520px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: left;
+    }
+    th {
+      background-color: #0f172a;
+      color: white;
+      padding: 12px 14px;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      font-weight: 600;
+    }
+    td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      background: white;
+    }
+    tr:hover td { background-color: #f8fafc; }
+
+    /* FORMS & INPUTS */
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-label {
+      display: block;
+      font-size: 12.5px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #334155;
+    }
+    .form-control {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 13px;
+      background: white;
+      color: var(--text);
+    }
+    .form-control:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(37,99,235,0.15);
+    }
+
+    /* MODAL */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-box {
+      background: white;
+      border-radius: 10px;
+      width: 520px;
+      max-width: 90vw;
+      padding: 24px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+    .modal-title { font-size: 18px; font-weight: 700; color: var(--text); }
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: var(--text-muted);
+    }
+
+    /* PRINT STYLES */
+    @media print {
+      #sidebar, .top-header, .no-print { display: none !important; }
+      body, #main-content, .content-viewport {
+        height: auto !important;
+        overflow: visible !important;
+        background: white !important;
+        padding: 0 !important;
+      }
+      .page-view { display: none !important; }
+      .page-view.active { display: block !important; }
+      .card { border: none !important; box-shadow: none !important; padding: 0 !important; }
+      th { background-color: #e2e8f0 !important; color: black !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SIDEBAR NAVIGATION -->
+  <nav id="sidebar">
+    <div class="brand-section">
+      <button id="sidebarToggle" class="sidebar-toggle no-print" type="button" title="Collapse menu" aria-label="Collapse menu">☰</button>
+      <div class="brand-title">Promotion Board</div>
+      <div class="brand-sub">Promotion & Scoring Portal</div>
+    </div>
+    <ul>
+      <li><a class="nav-link" href="dashboard.html">🏠 Welcome Dashboard</a></li>
+      <li><a class="nav-link" href="nominal-roll.html">📋 1. Master Nominal Roll</a></li>
+      <li><a class="nav-link" href="applications-vetting.html">📑 2. Applications & Vetting</a></li>
+      <li><a class="nav-link active" href="panel-scoring.html">📝 3. Panel Interview Scoring</a></li>
+      <li><a class="nav-link" href="merit-rankings.html">📊 4. Reports & Merit Rankings</a></li>
+      <div style="margin-top: 15px; font-size: 11px; text-transform: uppercase; color: var(--text-muted); padding-left: 20px; font-weight: 700;">Regional Command Group</div>
+      <ul style="margin-top: 5px;">
+        <li><a class="nav-link" href="rc-dashboard.html">📊 Regional Dashboard</a></li>
+        <li><a class="nav-link" href="rc-stations-scores.html">📥 1. Receive Station Results</a></li>
+        <li><a class="nav-link" href="regional-boards.html">🎯 2. Board Selection & Cut-offs</a></li>
+        <li><a class="nav-link" href="regional-scoring.html">⚖️ 3. Panel Interview Scoring</a></li>
+        <li><a class="nav-link" href="final-scores.html">🏆 4. Final Merit & Details</a></li>
+      </ul>
+      <div style="margin-top: 15px; font-size: 11px; text-transform: uppercase; color: var(--text-muted); padding-left: 20px; font-weight: 700;">System Admin</div>
+      <ul style="margin-top: 5px;">
+        <li><a class="nav-link" href="system-tools.html">⚠️ System & Data Cleanup</a></li>
+      </ul>
+
+    </ul>
+    <div class="sidebar-footer">
+      <div>Promotion Cycle: <strong id="sidebarYear">01/2026</strong></div>
+    </div>
+  </nav>
+
+  <!-- MAIN APP CONTAINER -->
+  <main id="main-content">
+    
+    <!-- TOP STATUS BAR -->
+    <header class="top-header no-print">
+      <div>
+        <h3 id="topHeaderTitle" style="font-size: 16px; font-weight: 600;">Embu Main Prison - Promotion Portal (<span id="promotionPeriodDisplay">01/2026</span>)</h3>
+      </div>
+      <div class="station-badge-wrapper">
+        <span class="station-label">Active Station:</span>
+        <span class="station-value" id="globalStationDisplay">EMBU MAIN PRISON</span>
+        <button class="edit-station-btn" onclick="openStationModal()">✏️ Edit</button>
+      </div>
+    </header>
+
+    <!-- CONTENT VIEWPORT -->
+    <div class="content-viewport">
+
+      <section id="scoring-page" class="page-view active">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+          <div>
+            <h2 class="section-title">Step 3: Panel Interview Scoresheet</h2>
+            <p class="section-desc">Grade candidates during the promotion board interviews across standard evaluation criteria.</p>
+            <p class="section-desc" style="font-size: 12px; color: var(--danger);">* Only candidates marked as "ELIGIBLE" in Step 2 will appear here.</p>
+          </div>
+          <div style="display:flex;gap:10px;">
+            <button class="btn btn-secondary no-print" onclick="openScoringTemplateModal()">Edit Score Sheet</button>
+            <button class="btn btn-secondary no-print" onclick="triggerExport('candidate')">Export Candidate</button>
+            <button class="btn btn-secondary no-print" onclick="triggerExport('rank')">Export Rank</button>
+            <button class="btn btn-secondary no-print" onclick="triggerExport('all')">Export All</button>
+          </div>
+        </div>
+
+        <!-- Candidate Selection Header -->
+        <div class="card no-print">
+          <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 20px; align-items: end;">
+            <div>
+              <label class="form-label">1. Select Rank Interviewed For:</label>
+              <select id="scoringRankSelect" class="form-control" onchange="loadScoringCandidates()">
+                <option value="CPL">Corporal (CPL)</option>
+                <option value="SGT">Sergeant (SGT)</option>
+                <option value="S/SGT">Senior Sergeant (S/SGT)</option>
+                <option value="IP">Inspector (IP)</option>
+                <option value="CIP">Chief Inspector (CIP)</option>
+                <option value="ASP">ASP</option>
+                <option value="SP">SP</option>
+                <option value="SSP">SSP</option>
+                <option value="CP">CP</option>
+                <option value="ACGP">ACGP</option>
+                <option value="SACGP">SACGP</option>
+                <option value="DCGP">DCGP</option>
+                <option value="CGP">CGP</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label">2. Select Qualified Candidate:</label>
+              <select id="scoringCandidateSelect" class="form-control" onchange="loadCandidateScoreForm()">
+                <option value="">-- Choose Candidate to Score --</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div id="scoringEmptyPrompt" style="padding:40px;text-align:center;color:var(--text-muted);">
+          Please select a qualified candidate to view their score sheet.
+        </div>
+
+        <div id="scoringFormContainer" style="display: none;">
+          <div class="card" style="background: #f8fafc; border-left: 5px solid var(--accent);">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px;">
+              <div><span style="font-size: 11.5px; color: var(--text-muted); text-transform: uppercase;">PF Number:</span><div id="scorePfDisplay" style="font-size: 16px; font-weight: 700;">--</div></div>
+              <div><span style="font-size: 11.5px; color: var(--text-muted); text-transform: uppercase;">Officer Name:</span><div id="scoreNameDisplay" style="font-size: 16px; font-weight: 700;">--</div></div>
+              <div><span style="font-size: 11.5px; color: var(--text-muted); text-transform: uppercase;">Current Rank & Station:</span><div id="scoreCurrentRankDisplay" style="font-size: 14px; font-weight: 600; display: inline;">--</div> / <div id="scoreStationDisplay" style="font-size: 14px; font-weight: 600; display: inline;">--</div></div>
+              <div><span style="font-size: 11.5px; color: var(--text-muted); text-transform: uppercase;">Interview For:</span><div id="scoreTargetRankDisplay" style="font-size: 15px; font-weight: 700; color: var(--accent);">--</div></div>
+              <div><span style="font-size: 11.5px; color: var(--text-muted); text-transform: uppercase;">Highest Education:</span><div id="scoreEducationDisplay" style="font-size:14px;font-weight:600;">--</div></div>
+            </div>
+          </div>
+
+          <form id="activeScoringForm" onsubmit="event.preventDefault(); submitPanelScore();">
+            <div class="card">
+              <h3 style="font-size: 16px; margin-bottom: 14px;">Interview Rubric Matrix</h3>
+              <div class="table-container">
+                <table>
+                  <thead>
+                    <tr>
+                      <th style="width: 50px;">S/NO</th>
+                      <th>VARIABLE</th>
+                      <th style="width: 130px; text-align: center;">MAX MARKS</th>
+                      <th style="width: 160px; text-align: center;">MARKS AWARDED</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    
+                    <tr>
+                      <td><strong>1</strong></td>
+                      <td><strong id="score_label_education" style="text-transform: uppercase;">EDUCATION</strong></td>
+                      <td id="score_max_education" style="text-align: center; font-weight: 600;">20</td>
+                      <td style="text-align: center;">
+                        <input type="number" id="score_education" class="form-control no-print" style="text-align: center; font-weight: 700;" min="0" step="0.5" value="" oninput="calculateTotalScore()">
+                      </td>
+                    </tr>
+                    <tr>
+                      <td><strong>2</strong></td>
+                      <td><strong id="score_label_service" style="text-transform: uppercase;">LENGTH OF SERVICE</strong></td>
+                      <td id="score_max_service" style="text-align: center; font-weight: 600;">18</td>
+                      <td style="text-align: center;">
+                        <input type="number" id="score_service" class="form-control no-print" style="text-align: center; font-weight: 700;" min="0" step="0.5" value="" oninput="calculateTotalScore()">
+                      </td>
+                    </tr>
+                    <tr>
+                      <td><strong>3</strong></td>
+                      <td><strong id="score_label_turnout" style="text-transform: uppercase;">TURNOUT (PRESENTATION, APPEARANCE AND DRESS)</strong></td>
+                      <td id="score_max_turnout" style="text-align: center; font-weight: 600;">15</td>
+                      <td style="text-align: center;">
+                        <input type="number" id="score_turnout" class="form-control no-print" style="text-align: center; font-weight: 700;" min="0" step="0.5" value="" oninput="calculateTotalScore()">
+                      </td>
+                    </tr>
+                    <tr>
+                      <td><strong>4</strong></td>
+                      <td><strong id="score_label_knowledge" style="text-transform: uppercase;">KNOWLEDGE OF PRISON WORK</strong></td>
+                      <td id="score_max_knowledge" style="text-align: center; font-weight: 600;">25</td>
+                      <td style="text-align: center;">
+                        <input type="number" id="score_knowledge" class="form-control no-print" style="text-align: center; font-weight: 700;" min="0" step="0.5" value="" oninput="calculateTotalScore()">
+                      </td>
+                    </tr>
+                    <tr>
+                      <td><strong>5</strong></td>
+                      <td><strong id="score_label_current_affairs" style="text-transform: uppercase;">CURRENT AFFAIRS/KNOWLEDGE OF GOK</strong></td>
+                      <td id="score_max_current_affairs" style="text-align: center; font-weight: 600;">13</td>
+                      <td style="text-align: center;">
+                        <input type="number" id="score_current_affairs" class="form-control no-print" style="text-align: center; font-weight: 700;" min="0" step="0.5" value="" oninput="calculateTotalScore()">
+                      </td>
+                    </tr>
+                    <tr>
+                      <td><strong>6</strong></td>
+                      <td><strong id="score_label_clean_record" style="text-transform: uppercase;">CLEAN RECORD OF SERVICE FOR LAST 3 YEARS</strong></td>
+                      <td id="score_max_clean_record" style="text-align: center; font-weight: 600;">05</td>
+                      <td style="text-align: center;">
+                        <input type="number" id="score_clean_record" class="form-control no-print" style="text-align: center; font-weight: 700;" min="0" step="0.5" value="" oninput="calculateTotalScore()">
+                      </td>
+                    </tr>
+                    <tr>
+                      <td><strong>7</strong></td>
+                      <td><strong id="score_label_commendations" style="text-transform: uppercase;">COMMENDATIONS/RECOMMENDATIONS</strong></td>
+                      <td id="score_max_commendations" style="text-align: center; font-weight: 600;">04</td>
+                      <td style="text-align: center;">
+                        <input type="number" id="score_commendations" class="form-control no-print" style="text-align: center; font-weight: 700;" min="0" step="0.5" value="" oninput="calculateTotalScore()">
+                      </td>
+                    </tr>
+                    <tr>
+                      <td colspan="2" style="text-align: right; font-weight: 700; font-size: 16px;">TOTAL MARKS</td>
+                      <td id="scoreMaxTotalDisplay" style="text-align: center; font-weight: 700; font-size: 16px; color: var(--accent);">100</td>
+                      <td id="liveScoreTotal" style="text-align: center; font-weight: 700; font-size: 18px; color: #16a34a;">0.00</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div style="margin-top: 20px;" class="no-print">
+                <h4 style="font-size: 14px; margin-bottom: 8px;">Panel Remarks</h4>
+                <textarea id="scoreRemarksInput" class="form-control" rows="3" placeholder="Enter remarks..."></textarea>
+              </div>
+              
+              <div style="margin-top: 20px;">
+                <h4 style="font-size: 14px; margin-bottom: 8px;">APPENDIX 01: EDUCATION</h4>
+                <div id="educationAppendixDisplay" style="font-size: 13px; color: #333; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;"></div>
+              </div>
+              
+              <div style="margin-top: 20px;">
+                <h4 style="font-size: 14px; margin-bottom: 8px;">APPENDIX 02: LENGTH OF SERVICE</h4>
+                <div id="serviceAppendixDisplay" style="font-size: 13px; color: #333;"></div>
+              </div>
+
+              <div style="margin-top: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                  <div><strong>CHAIRMAN SIGNATURE: ____________________</strong></div>
+                  <div><strong>DATE: ____________________</strong></div>
+                  <div><strong>MEMBER SIGNATURE: ____________________</strong></div>
+                  <div><strong>DATE: ____________________</strong></div>
+                  <div><strong>MEMBER SIGNATURE: ____________________</strong></div>
+                  <div><strong>DATE: ____________________</strong></div>
+                  <div><strong>MEMBER SIGNATURE: ____________________</strong></div>
+                  <div><strong>DATE: ____________________</strong></div>
+              </div>
+
+              <div class="no-print" style="display: flex; justify-content: flex-end; align-items: center; gap: 14px; margin-top: 24px; border-top: 1px solid var(--border); padding-top: 16px;">
+                <span id="scoringSaveStatus" style="font-weight: 600;"></span>
+                <button type="button" class="btn btn-success" onclick="submitPanelScore()" style="font-size: 15px; padding: 10px 24px;">Save Score & Remarks</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Scoring Template Modal -->
+  <div id="scoringTemplateModal" class="modal-overlay">
+    <div class="modal-box" style="width: 700px; max-height: 88vh; overflow-y: auto;">
+      <div class="modal-header">
+        <h3 class="modal-title">Edit Interview Marking Scheme</h3>
+        <button class="modal-close" onclick="closeScoringTemplateModal()">x</button>
+      </div>
+      <p class="section-desc">Changes here will apply to all newly generated score sheets and exported Word documents.</p>
+      
+      <div style="margin-top: 20px;">
+        <h4>1. Assessment Criteria</h4>
+        <div id="templateCriteriaEditor" style="margin-top: 10px;"></div>
+      </div>
+      
+      <div style="margin-top: 20px;">
+        <h4>2. Education Appendix</h4>
+        <div id="templateEducationEditor" style="margin-top: 10px;"></div>
+        <button class="btn btn-outline" onclick="addEducationAppendixRow()" style="margin-top: 10px;">+ Add Education Row</button>
+      </div>
+      
+      <div style="margin-top: 20px;">
+        <h4>3. Service Appendix</h4>
+        <textarea id="templateServiceAppendix" class="form-control" rows="3"></textarea>
+      </div>
+      
+      <div style="display: flex; justify-content: space-between; margin-top: 24px;">
+        <div id="scoringTemplateStatus" style="font-weight: 600;"></div>
+        <div style="display: flex; gap: 10px;">
+          <button class="btn btn-secondary" onclick="closeScoringTemplateModal()">Cancel</button>
+          <button class="btn btn-success" onclick="saveScoringTemplate()">Save Changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<div id="stationModal" class="modal-overlay">
+  <div class="modal-box" style="width: 450px;">
+    <div class="modal-header">
+      <h3 class="modal-title">Global Settings</h3>
+      <button class="modal-close" onclick="closeStationModal()">x</button>
+    </div>
+    <div class="form-group" style="margin-top: 15px;">
+      <label class="form-label">Station Name</label>
+      <input id="stationModalInput" type="text" class="form-control" placeholder="e.g. EMBU MAIN PRISON">
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+      <div class="form-group">
+        <label class="form-label">Promotion Month</label>
+        <select id="promotionMonthInput" class="form-control">
+          <option value="1">January</option><option value="2">February</option><option value="3">March</option>
+          <option value="4">April</option><option value="5">May</option><option value="6">June</option>
+          <option value="7">July</option><option value="8">August</option><option value="9">September</option>
+          <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Promotion Year</label>
+        <input id="promotionYearInput" type="number" class="form-control" min="2000" max="2100" value="2026">
+      </div>
+    </div>
+    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+      <button class="btn btn-secondary" onclick="closeStationModal()">Cancel</button>
+      <button class="btn btn-success" onclick="saveStationName()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<script src="renderer.js"></script>
+</body>
+</html>
