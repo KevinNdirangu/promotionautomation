@@ -684,13 +684,13 @@
   <script src="renderer.js"></script>
 
   <div id="applicationColumnsModal" class="modal-overlay">
-    <div class="modal-box" style="max-width: 720px;">
+    <div class="modal-box" style="max-width: 720px; max-height: 88vh; display: flex; flex-direction: column;">
       <div class="modal-header">
         <h3 class="modal-title">Applications Columns</h3>
         <button class="modal-close" onclick="closeApplicationColumnsModal()">x</button>
       </div>
       <p class="section-desc" style="margin-bottom: 16px;">Select or deselect columns shown in the applications table.</p>
-      <div id="applicationColumnsGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px;"></div>
+      <div id="applicationColumnsGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; overflow-y: auto; max-height: 52vh; padding-right: 5px;"></div>
       <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px;">
         <button class="btn btn-secondary" onclick="showAllApplicationColumns()">Show All</button>
         <button class="btn btn-success" onclick="saveApplicationColumns()">Save Columns</button>

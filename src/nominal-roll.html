@@ -496,14 +496,14 @@
       </section>
 
       <div id="nominalColumnsModal" class="modal-overlay">
-        <div class="modal-box" style="max-width: 720px;">
+        <div class="modal-box" style="max-width: 720px; max-height: 88vh; display: flex; flex-direction: column;">
           <span class="close" onclick="closeNominalColumnsModal()">&times;</span>
           <h3 class="modal-title">Nominal Roll Columns</h3>
           <p class="section-desc" style="margin-bottom: 16px;">Select or deselect columns shown in the nominal roll.</p>
-          <div id="nominalColumnsGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px;"></div>
+          <div id="nominalColumnsGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; overflow-y: auto; max-height: 52vh; padding-right: 5px;"></div>
           <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px;">
             <button class="btn btn-secondary" onclick="showAllNominalColumns()">Show All</button>
-            <button class="btn" onclick="saveNominalColumns()">Save Columns</button>
+            <button class="btn btn-success" onclick="saveNominalColumns()">Save Columns</button>
           </div>
         </div>
       </div>
