@@ -18,7 +18,7 @@
       --border: #e2e8f0;
       --success: #16a34a;
       --danger: #dc2626;
-      --warning: #d97706;
+      --warning: #f59e0b;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
@@ -33,286 +33,142 @@
       flex-direction: column;
       flex-shrink: 0;
       border-right: 1px solid #1e293b;
-      transition: width 0.2s ease;
-      position: relative;
+      transition: width 0.2s ease, padding 0.2s ease;
+      overflow: hidden;
+      white-space: nowrap;
     }
-    body.sidebar-collapsed #sidebar { width: 72px; }
+    
+    body.sidebar-collapsed #sidebar { 
+      width: 0; 
+      border-right: none; 
+    }
+    
     body.sidebar-collapsed #sidebar .brand-title,
     body.sidebar-collapsed #sidebar .brand-sub,
     body.sidebar-collapsed #sidebar .sidebar-footer,
+    body.sidebar-collapsed #sidebar .nav-group-title,
     body.sidebar-collapsed #sidebar .nav-link { display: none; }
-    .sidebar-toggle {
-      position: absolute;
-      top: 14px;
-      right: 12px;
-      width: 32px;
-      height: 32px;
-      border: 1px solid #475569;
-      border-radius: 6px;
-      background: #1e293b;
-      color: #fff;
-      cursor: pointer;
-      font-size: 18px;
+    
+    .nav-group-title {
+      white-space: nowrap;
+      overflow: hidden;
+      margin-top: 15px; 
+      font-size: 11px; 
+      text-transform: uppercase; 
+      color: var(--text-muted); 
+      padding-left: 20px; 
+      font-weight: 700;
     }
-    body.sidebar-collapsed .sidebar-toggle { right: 20px; }
-    body.sidebar-collapsed #sidebar .brand-section { min-height: 62px; }
+
+    /* HEADER HAMBURGER TOGGLE */
+    .sidebar-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      background: #f8fafc;
+      color: var(--text);
+      cursor: pointer;
+      font-size: 20px;
+      transition: background 0.15s ease;
+      z-index: 100;
+    }
+    .sidebar-toggle:hover { background: #e2e8f0; }
+
     .brand-section {
       padding: 22px 20px;
       border-bottom: 1px solid #1e293b;
+      min-height: 62px;
     }
-    .brand-title {
-      font-size: 16px;
-      font-weight: 700;
-      color: #38bdf8;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    .brand-sub {
-      font-size: 12px;
-      color: #94a3b8;
-      margin-top: 4px;
-    }
+    .brand-title { font-size: 16px; font-weight: 700; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.5px; }
+    .brand-sub { font-size: 12px; color: #94a3b8; margin-top: 4px; }
     #sidebar ul { list-style: none; margin-top: 15px; }
-    #sidebar ul li a {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 13px 20px;
-      color: #94a3b8;
-      text-decoration: none;
-      font-size: 13.5px;
-      font-weight: 500;
-      transition: 0.15s ease;
-      cursor: pointer;
-    }
-    #sidebar ul li a:hover {
-      background-color: var(--sidebar-hover);
-      color: #ffffff;
-    }
-    #sidebar ul li a.active {
-      background-color: #1e293b;
-      color: #ffffff;
-      border-left: 4px solid var(--accent);
-      font-weight: 600;
-    }
-    .sidebar-footer {
-      margin-top: auto;
-      padding: 16px 20px;
-      border-top: 1px solid #1e293b;
-      font-size: 11.5px;
-      color: #64748b;
-    }
+    #sidebar ul li a { display: flex; align-items: center; gap: 12px; padding: 13px 20px; color: #94a3b8; text-decoration: none; font-size: 13.5px; font-weight: 500; transition: 0.15s ease; cursor: pointer; }
+    #sidebar ul li a:hover { background-color: var(--sidebar-hover); color: #ffffff; }
+    #sidebar ul li a.active { background-color: #1e293b; color: #ffffff; border-left: 4px solid var(--accent); font-weight: 600; }
+    .sidebar-footer { margin-top: auto; padding: 16px 20px; border-top: 1px solid #1e293b; font-size: 11.5px; color: #64748b; }
 
     /* MAIN CONTENT */
-    #main-content {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      overflow: hidden;
-    }
-    .top-header {
-      background: white;
-      border-bottom: 1px solid var(--border);
-      padding: 14px 28px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-shrink: 0;
-    }
-    .station-badge-wrapper {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: #f1f5f9;
-      border: 1px solid #cbd5e1;
-      padding: 6px 14px;
-      border-radius: 20px;
-    }
-    .station-label {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text-muted);
-      text-transform: uppercase;
-    }
-    .station-value {
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--primary);
-    }
-    .edit-station-btn {
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 12px;
-      color: var(--accent);
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 3px;
-    }
+    #main-content { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+    .top-header { background: white; border-bottom: 1px solid var(--border); padding: 14px 28px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .station-badge-wrapper { display: flex; align-items: center; gap: 10px; background: #f1f5f9; border: 1px solid #cbd5e1; padding: 6px 14px; border-radius: 20px; }
+    .station-label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
+    .station-value { font-size: 13px; font-weight: 700; color: var(--primary); }
+    .edit-station-btn { background: none; border: none; cursor: pointer; font-size: 12px; color: var(--accent); font-weight: 600; display: flex; align-items: center; gap: 3px; }
     .edit-station-btn:hover { text-decoration: underline; }
 
-    .content-viewport {
-      flex: 1;
-      overflow-y: auto;
-      padding: 28px;
-    }
+    .content-viewport { flex: 1; overflow-y: auto; padding: 28px; }
 
-    /* VIEWS */
+    /* VIEWS & CARDS */
     .page-view { display: none; }
     .page-view.active { display: block; animation: fadeIn 0.2s ease-in-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* COMPONENTS */
-    .card {
-      background: var(--card-bg);
-      border-radius: 8px;
-      padding: 22px;
-      border: 1px solid var(--border);
-      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-      margin-bottom: 22px;
-    }
-    .section-title {
-      font-size: 20px;
-      font-weight: 700;
-      color: var(--text);
-      margin-bottom: 4px;
-    }
-    .section-desc {
-      font-size: 13.5px;
-      color: var(--text-muted);
-      margin-bottom: 20px;
-    }
+    .card { background: var(--card-bg); border-radius: 8px; padding: 22px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.04); margin-bottom: 22px; }
+    .section-title { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .section-desc { font-size: 13.5px; color: var(--text-muted); margin-bottom: 20px; }
 
     /* BUTTONS */
-    .btn {
-      background-color: var(--accent);
-      color: white;
-      border: none;
-      padding: 9px 16px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 13px;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: background 0.15s;
-    }
+    .btn { background-color: var(--accent); color: white; border: none; padding: 9px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; transition: background 0.15s; }
     .btn:hover { background-color: #1d4ed8; }
-    .btn-secondary { background-color: #475569; }
-    .btn-secondary:hover { background-color: #334155; }
+    .btn-secondary { background-color: #cbd5e1; color: var(--primary); }
+    .btn-secondary:hover { background-color: #94a3b8; }
     .btn-success { background-color: var(--success); }
     .btn-success:hover { background-color: #15803d; }
-    .btn-outline {
-      background: transparent;
-      color: var(--text);
-      border: 1px solid var(--border);
-    }
+    .btn-warning { background-color: var(--warning); color: white; }
+    .btn-warning:hover { background-color: #d97706; }
+    .btn-danger { background-color: var(--danger); color: white; }
+    .btn-danger:hover { background-color: #b91c1c; }
+    .btn-sm { padding: 4px 8px; font-size: 12px; }
+    .btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border); }
     .btn-outline:hover { background: #f1f5f9; }
 
     /* TABLES */
-    .table-container {
-      max-height: 520px;
-      overflow-y: auto;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-      text-align: left;
-    }
-    th {
-      background-color: #0f172a;
-      color: white;
-      padding: 12px 14px;
-      position: sticky;
-      top: 0;
-      z-index: 2;
-      font-weight: 600;
-    }
-    td {
-      padding: 10px 14px;
-      border-bottom: 1px solid var(--border);
-      background: white;
-    }
+    .table-container { max-height: 520px; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+    th { background-color: #0f172a; color: white; padding: 12px 14px; position: sticky; top: 0; z-index: 2; font-weight: 600; }
+    td { padding: 10px 14px; border-bottom: 1px solid var(--border); background: white; }
     tr:hover td { background-color: #f8fafc; }
 
     /* FORMS & INPUTS */
-    .form-group {
-      margin-bottom: 16px;
-    }
-    .form-label {
-      display: block;
-      font-size: 12.5px;
-      font-weight: 600;
-      margin-bottom: 6px;
-      color: #334155;
-    }
-    .form-control {
-      width: 100%;
-      padding: 9px 12px;
-      border: 1px solid #cbd5e1;
-      border-radius: 6px;
-      font-size: 13px;
-      background: white;
-      color: var(--text);
-    }
-    .form-control:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 2px rgba(37,99,235,0.15);
-    }
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 12.5px; font-weight: 600; margin-bottom: 6px; color: #334155; }
+    .form-control { width: 100%; padding: 9px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; background: white; color: var(--text); }
+    .form-control:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(37,99,235,0.15); }
 
     /* MODAL */
-    .modal-overlay {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(15, 23, 42, 0.6);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-    }
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.6); display: none; align-items: center; justify-content: center; z-index: 100; }
     .modal-overlay.active { display: flex; }
-    .modal-box {
-      background: white;
-      border-radius: 10px;
-      width: 520px;
-      max-width: 90vw;
-      padding: 24px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-    }
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 18px;
-    }
-    .modal-title { font-size: 18px; font-weight: 700; color: var(--text); }
-    .modal-close {
-      background: none;
-      border: none;
-      font-size: 20px;
-      cursor: pointer;
-      color: var(--text-muted);
-    }
+    .modal-box { background: white; border-radius: 10px; width: 650px; max-width: 90vw; box-shadow: 0 10px 25px rgba(0,0,0,0.15); display: flex; flex-direction: column; overflow: hidden; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; background: var(--primary); color: white; }
+    .modal-title { font-size: 16px; font-weight: 600; margin: 0; }
+    .modal-close { background: none; border: none; font-size: 22px; cursor: pointer; color: white; line-height: 1; }
 
-    /* PRINT STYLES */
+    /* MODAL TABS & INTERNAL TABLES */
+    .modal-body { padding: 20px 24px; overflow-y: auto; max-height: 60vh; }
+    .tab-bar { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 15px; }
+    .tab-btn { padding: 8px 16px; border: none; background: none; font-weight: 600; font-size: 13.5px; cursor: pointer; color: #64748b; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    
+    .settings-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+    .settings-table th, .settings-table td { border: 1px solid var(--border); padding: 6px 8px; text-align: left; }
+    .settings-table th { background: #f1f5f9; font-size: 12px; color: var(--text); position: static; }
+    .settings-table input[type="text"], .settings-table input[type="number"] { padding: 6px; font-size: 13px; width: 100%; box-sizing: border-box; border: 1px solid var(--border); border-radius: 4px; }
+
+    .modal-footer { padding: 16px 24px; background: #f1f5f9; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+
     @media print {
       #sidebar, .top-header, .no-print { display: none !important; }
-      body, #main-content, .content-viewport {
-        height: auto !important;
-        overflow: visible !important;
-        background: white !important;
-        padding: 0 !important;
-      }
+      body, #main-content, .content-viewport { height: auto !important; overflow: visible !important; background: white !important; padding: 0 !important; }
       .page-view { display: none !important; }
       .page-view.active { display: block !important; }
-      .card { border: none !important; box-shadow: none !important; padding: 0 !important; }
+      .card { border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important;}
       th { background-color: #e2e8f0 !important; color: black !important; }
     }
   </style>
@@ -322,7 +178,6 @@
   <!-- SIDEBAR NAVIGATION -->
   <nav id="sidebar">
     <div class="brand-section">
-      <button id="sidebarToggle" class="sidebar-toggle no-print" type="button" title="Collapse menu" aria-label="Collapse menu">☰</button>
       <div class="brand-title">Promotion Board</div>
       <div class="brand-sub">Promotion & Scoring Portal</div>
     </div>
@@ -332,19 +187,10 @@
       <li><a class="nav-link" href="applications-vetting.html">📑 2. Applications & Vetting</a></li>
       <li><a class="nav-link active" href="panel-scoring.html">📝 3. Panel Interview Scoring</a></li>
       <li><a class="nav-link" href="merit-rankings.html">📊 4. Reports & Merit Rankings</a></li>
-      <div style="margin-top: 15px; font-size: 11px; text-transform: uppercase; color: var(--text-muted); padding-left: 20px; font-weight: 700;">Regional Command Group</div>
-      <ul style="margin-top: 5px;">
-        <li><a class="nav-link" href="rc-dashboard.html">📊 Regional Dashboard</a></li>
-        <li><a class="nav-link" href="rc-stations-scores.html">📥 1. Receive Station Results</a></li>
-        <li><a class="nav-link" href="regional-boards.html">🎯 2. Board Selection & Cut-offs</a></li>
-        <li><a class="nav-link" href="regional-scoring.html">⚖️ 3. Panel Interview Scoring</a></li>
-        <li><a class="nav-link" href="final-scores.html">🏆 4. Final Merit & Details</a></li>
-      </ul>
-      <div style="margin-top: 15px; font-size: 11px; text-transform: uppercase; color: var(--text-muted); padding-left: 20px; font-weight: 700;">System Admin</div>
+      <div class="nav-group-title">System Admin</div>
       <ul style="margin-top: 5px;">
         <li><a class="nav-link" href="system-tools.html">⚠️ System & Data Cleanup</a></li>
       </ul>
-
     </ul>
     <div class="sidebar-footer">
       <div>Promotion Cycle: <strong id="sidebarYear">01/2026</strong></div>
@@ -354,10 +200,10 @@
   <!-- MAIN APP CONTAINER -->
   <main id="main-content">
     
-    <!-- TOP STATUS BAR -->
     <header class="top-header no-print">
-      <div>
-        <h3 id="topHeaderTitle" style="font-size: 16px; font-weight: 600;">Embu Main Prison - Promotion Portal (<span id="promotionPeriodDisplay">01/2026</span>)</h3>
+      <div class="header-left">
+        <button id="sidebarToggle" class="sidebar-toggle no-print" type="button" title="Toggle menu" aria-label="Toggle menu">☰</button>
+        <h3 id="topHeaderTitle" style="font-size: 16px; font-weight: 600; margin: 0;">Embu Main Prison - Promotion Portal (<span id="promotionPeriodDisplay">01/2026</span>)</h3>
       </div>
       <div class="station-badge-wrapper">
         <span class="station-label">Active Station:</span>
@@ -366,9 +212,7 @@
       </div>
     </header>
 
-    <!-- CONTENT VIEWPORT -->
     <div class="content-viewport">
-
       <section id="scoring-page" class="page-view active">
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
           <div>
@@ -377,7 +221,7 @@
             <p class="section-desc" style="font-size: 12px; color: var(--danger);">* Only candidates marked as "ELIGIBLE" in Step 2 will appear here.</p>
           </div>
           <div style="display:flex;gap:10px;">
-            <button class="btn btn-secondary no-print" onclick="openScoringTemplateModal()">Edit Score Sheet</button>
+            <button class="btn btn-secondary no-print" onclick="openScoringTemplateModal()">⚙️ Customize Score Sheet</button>
             <button class="btn btn-secondary no-print" onclick="triggerExport('candidate')">Export Candidate</button>
             <button class="btn btn-secondary no-print" onclick="triggerExport('rank')">Export Rank</button>
             <button class="btn btn-secondary no-print" onclick="triggerExport('all')">Export All</button>
@@ -390,19 +234,10 @@
             <div>
               <label class="form-label">1. Select Rank Interviewed For:</label>
               <select id="scoringRankSelect" class="form-control" onchange="loadScoringCandidates()">
-                <option value="CPL">Corporal (CPL)</option>
-                <option value="SGT">Sergeant (SGT)</option>
-                <option value="S/SGT">Senior Sergeant (S/SGT)</option>
-                <option value="IP">Inspector (IP)</option>
-                <option value="CIP">Chief Inspector (CIP)</option>
-                <option value="ASP">ASP</option>
-                <option value="SP">SP</option>
-                <option value="SSP">SSP</option>
-                <option value="CP">CP</option>
-                <option value="ACGP">ACGP</option>
-                <option value="SACGP">SACGP</option>
-                <option value="DCGP">DCGP</option>
-                <option value="CGP">CGP</option>
+                <option value="CPL">Corporal (CPL)</option><option value="SGT">Sergeant (SGT)</option><option value="S/SGT">Senior Sergeant (S/SGT)</option>
+                <option value="IP">Inspector (IP)</option><option value="CIP">Chief Inspector (CIP)</option><option value="ASP">ASP</option>
+                <option value="SP">SP</option><option value="SSP">SSP</option><option value="CP">CP</option>
+                <option value="ACGP">ACGP</option><option value="SACGP">SACGP</option><option value="DCGP">DCGP</option><option value="CGP">CGP</option>
               </select>
             </div>
             <div>
@@ -443,62 +278,47 @@
                     </tr>
                   </thead>
                   <tbody>
-                    
                     <tr>
                       <td><strong>1</strong></td>
                       <td><strong id="score_label_education" style="text-transform: uppercase;">EDUCATION</strong></td>
                       <td id="score_max_education" style="text-align: center; font-weight: 600;">20</td>
-                      <td style="text-align: center;">
-                        <input type="number" id="score_education" class="form-control no-print" style="text-align: center; font-weight: 700;" min="0" step="0.5" value="" oninput="calculateTotalScore()">
-                      </td>
+                      <td style="text-align: center;"><input type="number" id="score_education" class="form-control no-print" style="text-align: center; font-weight: 700;" min="0" step="0.5" value="" oninput="calculateTotalScore()"></td>
                     </tr>
                     <tr>
                       <td><strong>2</strong></td>
                       <td><strong id="score_label_service" style="text-transform: uppercase;">LENGTH OF SERVICE</strong></td>
                       <td id="score_max_service" style="text-align: center; font-weight: 600;">18</td>
-                      <td style="text-align: center;">
-                        <input type="number" id="score_service" class="form-control no-print" style="text-align: center; font-weight: 700;" min="0" step="0.5" value="" oninput="calculateTotalScore()">
-                      </td>
+                      <td style="text-align: center;"><input type="number" id="score_service" class="form-control no-print" style="text-align: center; font-weight: 700;" min="0" step="0.5" value="" oninput="calculateTotalScore()"></td>
                     </tr>
                     <tr>
                       <td><strong>3</strong></td>
                       <td><strong id="score_label_turnout" style="text-transform: uppercase;">TURNOUT (PRESENTATION, APPEARANCE AND DRESS)</strong></td>
                       <td id="score_max_turnout" style="text-align: center; font-weight: 600;">15</td>
-                      <td style="text-align: center;">
-                        <input type="number" id="score_turnout" class="form-control no-print" style="text-align: center; font-weight: 700;" min="0" step="0.5" value="" oninput="calculateTotalScore()">
-                      </td>
+                      <td style="text-align: center;"><input type="number" id="score_turnout" class="form-control no-print" style="text-align: center; font-weight: 700;" min="0" step="0.5" value="" oninput="calculateTotalScore()"></td>
                     </tr>
                     <tr>
                       <td><strong>4</strong></td>
                       <td><strong id="score_label_knowledge" style="text-transform: uppercase;">KNOWLEDGE OF PRISON WORK</strong></td>
                       <td id="score_max_knowledge" style="text-align: center; font-weight: 600;">25</td>
-                      <td style="text-align: center;">
-                        <input type="number" id="score_knowledge" class="form-control no-print" style="text-align: center; font-weight: 700;" min="0" step="0.5" value="" oninput="calculateTotalScore()">
-                      </td>
+                      <td style="text-align: center;"><input type="number" id="score_knowledge" class="form-control no-print" style="text-align: center; font-weight: 700;" min="0" step="0.5" value="" oninput="calculateTotalScore()"></td>
                     </tr>
                     <tr>
                       <td><strong>5</strong></td>
                       <td><strong id="score_label_current_affairs" style="text-transform: uppercase;">CURRENT AFFAIRS/KNOWLEDGE OF GOK</strong></td>
                       <td id="score_max_current_affairs" style="text-align: center; font-weight: 600;">13</td>
-                      <td style="text-align: center;">
-                        <input type="number" id="score_current_affairs" class="form-control no-print" style="text-align: center; font-weight: 700;" min="0" step="0.5" value="" oninput="calculateTotalScore()">
-                      </td>
+                      <td style="text-align: center;"><input type="number" id="score_current_affairs" class="form-control no-print" style="text-align: center; font-weight: 700;" min="0" step="0.5" value="" oninput="calculateTotalScore()"></td>
                     </tr>
                     <tr>
                       <td><strong>6</strong></td>
                       <td><strong id="score_label_clean_record" style="text-transform: uppercase;">CLEAN RECORD OF SERVICE FOR LAST 3 YEARS</strong></td>
                       <td id="score_max_clean_record" style="text-align: center; font-weight: 600;">05</td>
-                      <td style="text-align: center;">
-                        <input type="number" id="score_clean_record" class="form-control no-print" style="text-align: center; font-weight: 700;" min="0" step="0.5" value="" oninput="calculateTotalScore()">
-                      </td>
+                      <td style="text-align: center;"><input type="number" id="score_clean_record" class="form-control no-print" style="text-align: center; font-weight: 700;" min="0" step="0.5" value="" oninput="calculateTotalScore()"></td>
                     </tr>
                     <tr>
                       <td><strong>7</strong></td>
                       <td><strong id="score_label_commendations" style="text-transform: uppercase;">COMMENDATIONS/RECOMMENDATIONS</strong></td>
                       <td id="score_max_commendations" style="text-align: center; font-weight: 600;">04</td>
-                      <td style="text-align: center;">
-                        <input type="number" id="score_commendations" class="form-control no-print" style="text-align: center; font-weight: 700;" min="0" step="0.5" value="" oninput="calculateTotalScore()">
-                      </td>
+                      <td style="text-align: center;"><input type="number" id="score_commendations" class="form-control no-print" style="text-align: center; font-weight: 700;" min="0" step="0.5" value="" oninput="calculateTotalScore()"></td>
                     </tr>
                     <tr>
                       <td colspan="2" style="text-align: right; font-weight: 700; font-size: 16px;">TOTAL MARKS</td>
@@ -524,15 +344,11 @@
                 <div id="serviceAppendixDisplay" style="font-size: 13px; color: #333;"></div>
               </div>
 
-              <div style="margin-top: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                  <div><strong>CHAIRMAN SIGNATURE: ____________________</strong></div>
-                  <div><strong>DATE: ____________________</strong></div>
-                  <div><strong>MEMBER SIGNATURE: ____________________</strong></div>
-                  <div><strong>DATE: ____________________</strong></div>
-                  <div><strong>MEMBER SIGNATURE: ____________________</strong></div>
-                  <div><strong>DATE: ____________________</strong></div>
-                  <div><strong>MEMBER SIGNATURE: ____________________</strong></div>
-                  <div><strong>DATE: ____________________</strong></div>
+              <div id="liveSignaturesContainer" style="margin-top: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                  <div><strong>CHAIRMAN SIGNATURE: ____________________</strong></div><div><strong>DATE: ____________________</strong></div>
+                  <div><strong>MEMBER SIGNATURE: ____________________</strong></div><div><strong>DATE: ____________________</strong></div>
+                  <div><strong>MEMBER SIGNATURE: ____________________</strong></div><div><strong>DATE: ____________________</strong></div>
+                  <div><strong>MEMBER SIGNATURE: ____________________</strong></div><div><strong>DATE: ____________________</strong></div>
               </div>
 
               <div class="no-print" style="display: flex; justify-content: flex-end; align-items: center; gap: 14px; margin-top: 24px; border-top: 1px solid var(--border); padding-top: 16px;">
@@ -547,73 +363,364 @@
     </div>
   </main>
 
-  <!-- Scoring Template Modal -->
-  <div id="scoringTemplateModal" class="modal-overlay">
-    <div class="modal-box" style="width: 700px; max-height: 88vh; overflow-y: auto;">
+  <div class="modal-overlay" id="scoringTemplateModal">
+    <div class="modal-box">
       <div class="modal-header">
-        <h3 class="modal-title">Edit Interview Marking Scheme</h3>
-        <button class="modal-close" onclick="closeScoringTemplateModal()">x</button>
+        <h3 class="modal-title">Configure Assessment Settings</h3>
+        <button class="modal-close" onclick="closeScoringTemplateModal()">&times;</button>
       </div>
-      <p class="section-desc">Changes here will apply to all newly generated score sheets and exported Word documents.</p>
-      
-      <div style="margin-top: 20px;">
-        <h4>1. Assessment Criteria</h4>
-        <div id="templateCriteriaEditor" style="margin-top: 10px;"></div>
-      </div>
-      
-      <div style="margin-top: 20px;">
-        <h4>2. Education Appendix</h4>
-        <div id="templateEducationEditor" style="margin-top: 10px;"></div>
-        <button class="btn btn-outline" onclick="addEducationAppendixRow()" style="margin-top: 10px;">+ Add Education Row</button>
-      </div>
-      
-      <div style="margin-top: 20px;">
-        <h4>3. Service Appendix</h4>
-        <textarea id="templateServiceAppendix" class="form-control" rows="3"></textarea>
-      </div>
-      
-      <div style="display: flex; justify-content: space-between; margin-top: 24px;">
-        <div id="scoringTemplateStatus" style="font-weight: 600;"></div>
-        <div style="display: flex; gap: 10px;">
-          <button class="btn btn-secondary" onclick="closeScoringTemplateModal()">Cancel</button>
-          <button class="btn btn-success" onclick="saveScoringTemplate()">Save Changes</button>
+
+      <div class="modal-body">
+        <div class="tab-bar">
+          <button class="tab-btn active" data-tab="tab-criteria">Assessment Matrix</button>
+          <button class="tab-btn" data-tab="tab-edu">Education Appendix</button>
+          <button class="tab-btn" data-tab="tab-service">Service Appendix</button>
+          <button class="tab-btn" data-tab="tab-members">Board Members</button>
+        </div>
+        <div id="tab-criteria" class="tab-content active">
+          <table class="settings-table">
+            <thead>
+              <tr><th>Criteria Name</th><th style="width: 80px;">Max Marks</th><th style="width: 50px; text-align: center;">Action</th></tr>
+            </thead>
+            <tbody id="criteriaTableBody"></tbody>
+          </table>
+          <button id="addCriteriaBtn" class="btn btn-sm btn-secondary">+ Add Criterion</button>
+          <p style="font-size: 11.5px; color: var(--warning); margin-top: 8px;">Note: Adding/Removing core criteria fields here may be restricted by HQ database constraints. Mark totals will auto-sync.</p>
+        </div>
+        <div id="tab-edu" class="tab-content">
+          <table class="settings-table">
+            <thead>
+              <tr><th>Qualification Level</th><th style="width: 80px;">Marks</th><th style="width: 50px; text-align: center;">Action</th></tr>
+            </thead>
+            <tbody id="eduTableBody"></tbody>
+          </table>
+          <button id="addEduBtn" class="btn btn-sm btn-secondary">+ Add Qualification</button>
+        </div>
+        <div id="tab-service" class="tab-content">
+          <label class="form-label" style="margin-top: 10px;">Length of Service Description</label>
+          <textarea id="templateServiceAppendix" class="form-control" rows="4" placeholder="Describe how service marks are awarded..."></textarea>
+        </div>
+        <div id="tab-members" class="tab-content">
+          <table class="settings-table">
+            <thead>
+              <tr><th>Board Title / Role (e.g. CHAIRMAN)</th><th style="width: 50px; text-align: center;">Action</th></tr>
+            </thead>
+            <tbody id="membersTableBody"></tbody>
+          </table>
+          <button id="addMemberBtn" class="btn btn-sm btn-secondary">+ Add Member</button>
         </div>
       </div>
+      <div class="modal-footer">
+        <span id="criteriaTotalDisplay" style="margin-right: auto; font-weight: bold; font-size: 13px;">Total Marks: 100</span>
+        <div style="display: flex; gap: 8px; align-items: center;">
+            <button id="autoBalanceBtn" class="btn btn-sm btn-warning" style="margin: 0;">⚖️ Auto-Balance</button>
+            <button id="resetDefaultsBtn" class="btn btn-sm btn-secondary" style="margin: 0;">Reset Default</button>
+            <button class="btn btn-sm btn-secondary" style="margin: 0;" onclick="closeScoringTemplateModal()">Cancel</button>
+            <button class="btn btn-sm btn-success" style="margin: 0;" onclick="saveScoringTemplate()">Save Config</button>
+        </div>
+      </div>
+      <div id="scoringTemplateStatus" style="width: 100%; text-align: right; padding: 0 24px 12px; font-size: 12.5px; font-weight: 600;"></div>
     </div>
   </div>
 
+<!-- Station Settings Modal -->
 <div id="stationModal" class="modal-overlay">
   <div class="modal-box" style="width: 450px;">
     <div class="modal-header">
       <h3 class="modal-title">Global Settings</h3>
       <button class="modal-close" onclick="closeStationModal()">x</button>
     </div>
-    <div class="form-group" style="margin-top: 15px;">
-      <label class="form-label">Station Name</label>
-      <input id="stationModalInput" type="text" class="form-control" placeholder="e.g. EMBU MAIN PRISON">
+    <div class="modal-body">
+        <div class="form-group" style="margin-top: 5px;">
+          <label class="form-label">Station Name</label>
+          <input id="stationModalInput" type="text" class="form-control" placeholder="e.g. EMBU MAIN PRISON">
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+          <div class="form-group">
+            <label class="form-label">Promotion Month</label>
+            <select id="promotionMonthInput" class="form-control">
+              <option value="1">January</option><option value="2">February</option><option value="3">March</option>
+              <option value="4">April</option><option value="5">May</option><option value="6">June</option>
+              <option value="7">July</option><option value="8">August</option><option value="9">September</option>
+              <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Promotion Year</label>
+            <input id="promotionYearInput" type="number" class="form-control" min="2000" max="2100" value="2026">
+          </div>
+        </div>
     </div>
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-      <div class="form-group">
-        <label class="form-label">Promotion Month</label>
-        <select id="promotionMonthInput" class="form-control">
-          <option value="1">January</option><option value="2">February</option><option value="3">March</option>
-          <option value="4">April</option><option value="5">May</option><option value="6">June</option>
-          <option value="7">July</option><option value="8">August</option><option value="9">September</option>
-          <option value="10">October</option><option value="11">November</option><option value="12">December</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Promotion Year</label>
-        <input id="promotionYearInput" type="number" class="form-control" min="2000" max="2100" value="2026">
-      </div>
-    </div>
-    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
-      <button class="btn btn-secondary" onclick="closeStationModal()">Cancel</button>
-      <button class="btn btn-success" onclick="saveStationName()">Save Changes</button>
+    <div class="modal-footer" style="justify-content: flex-end; gap: 10px;">
+      <button class="btn btn-sm btn-secondary" onclick="closeStationModal()" style="margin: 0;">Cancel</button>
+      <button class="btn btn-sm btn-success" onclick="saveStationName()" style="margin: 0;">Save Changes</button>
     </div>
   </div>
 </div>
 
 <script src="renderer.js"></script>
+<script>
+    const DEFAULT_MEMBERS = [
+      { role: 'CHAIRMAN' }, { role: 'MEMBER' }, { role: 'MEMBER' }, { role: 'MEMBER' }, { role: 'MEMBER' }
+    ];
+    let modalCriteria = [];
+    let modalEdu = [];
+    let modalMembers = [];
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById(btn.dataset.tab).classList.add('active');
+            });
+        });
+
+        document.getElementById('addCriteriaBtn').addEventListener('click', () => {
+            modalCriteria.push({ key: `custom_${Date.now()}`, label: 'NEW CRITERIA', max: 0 });
+            renderCriteriaRows();
+        });
+
+        document.getElementById('addEduBtn').addEventListener('click', () => {
+            modalEdu.push({ qualification: 'NEW QUALIFICATION', marks: 0 });
+            renderEduRows();
+        });
+
+        document.getElementById('addMemberBtn').addEventListener('click', () => {
+            modalMembers.push({ role: 'MEMBER' });
+            renderMemberRows();
+        });
+
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('remove-crit')) { 
+                modalCriteria.splice(parseInt(e.target.dataset.index), 1); 
+                renderCriteriaRows(); 
+            }
+            if (e.target.classList.contains('remove-edu')) { 
+                modalEdu.splice(parseInt(e.target.dataset.index), 1); 
+                renderEduRows(); 
+            }
+            if (e.target.classList.contains('remove-member')) { 
+                modalMembers.splice(parseInt(e.target.dataset.index), 1); 
+                renderMemberRows(); 
+            }
+        });
+
+        document.getElementById('autoBalanceBtn').addEventListener('click', () => {
+            syncInputsToArrays();
+            const eduIndex = modalCriteria.findIndex(c => c.label.toUpperCase().includes('EDUCATION'));
+            const servIndex = modalCriteria.findIndex(c => c.label.toUpperCase().includes('SERVICE') && !c.label.toUpperCase().includes('CLEAN'));
+            let fixedSum = 0;
+            if (eduIndex >= 0) fixedSum += modalCriteria[eduIndex].max;
+            if (servIndex >= 0) fixedSum += modalCriteria[servIndex].max;
+            const remainingTarget = 100 - fixedSum;
+            const flexibleIndices = [];
+            let flexibleBaseSum = 0;
+            modalCriteria.forEach((c, idx) => {
+                if (idx !== eduIndex && idx !== servIndex) {
+                    flexibleIndices.push(idx);
+                    flexibleBaseSum += c.max;
+                }
+            });
+            if (flexibleIndices.length > 0 && flexibleBaseSum > 0 && remainingTarget > 0) {
+                let distributedSum = 0;
+                flexibleIndices.forEach(idx => {
+                    const proportionalMax = Math.round((modalCriteria[idx].max / flexibleBaseSum) * remainingTarget);
+                    modalCriteria[idx].max = proportionalMax;
+                    distributedSum += proportionalMax;
+                });
+                const diff = remainingTarget - distributedSum;
+                if (diff !== 0) {
+                    let largestIdx = flexibleIndices[0];
+                    flexibleIndices.forEach(idx => {
+                        if (modalCriteria[idx].max > modalCriteria[largestIdx].max) largestIdx = idx;
+                    });
+                    modalCriteria[largestIdx].max += diff;
+                }
+                renderCriteriaRows();
+            } else {
+                alert('Cannot auto-balance: Please ensure you have flexible criteria with base marks above 0.');
+            }
+        });
+
+        document.getElementById('resetDefaultsBtn').addEventListener('click', () => {
+            if (confirm("Reset to default configuration? This will clear any custom changes.")) {
+                modalMembers = JSON.parse(JSON.stringify(DEFAULT_MEMBERS));
+                localStorage.removeItem('ss_members_live');
+                renderMemberRows();
+                alert("Defaults loaded for members. Save config to apply to matrix if required by backend.");
+            }
+        });
+        
+        const savedMembers = localStorage.getItem('ss_members_live');
+        if (savedMembers) {
+            try { modalMembers = JSON.parse(savedMembers); updateLiveFormSignatures(); } catch(e) {}
+        }
+    });
+
+    function syncInputsToArrays() {
+        modalCriteria = Array.from(document.querySelectorAll('#criteriaTableBody tr')).map(row => ({
+            key: row.querySelector('.crit-label').dataset.key || `custom_${Date.now()}`,
+            label: row.querySelector('.crit-label').value.trim(),
+            max: parseFloat(row.querySelector('.crit-max').value) || 0
+        }));
+        modalEdu = Array.from(document.querySelectorAll('#eduTableBody tr')).map(row => ({
+            qualification: row.querySelector('.edu-q').value.trim(),
+            marks: parseFloat(row.querySelector('.edu-m').value) || 0
+        }));
+        modalMembers = Array.from(document.querySelectorAll('#membersTableBody tr')).map(row => ({
+            role: row.querySelector('.member-role').value.trim() || 'MEMBER'
+        }));
+    }
+
+    function calculateModalTotal() {
+        let total = 0;
+        document.querySelectorAll('.crit-max').forEach(input => { total += parseFloat(input.value) || 0; });
+        const display = document.getElementById('criteriaTotalDisplay');
+        if (display) {
+            display.innerText = `Total Marks: ${total}`;
+            display.style.color = total === 100 ? 'var(--success)' : 'var(--danger)';
+        }
+        return total;
+    }
+
+    function renderCriteriaRows() {
+        const tbody = document.getElementById('criteriaTableBody');
+        tbody.innerHTML = '';
+        modalCriteria.forEach((item, index) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><input type="text" value="${item.label}" class="crit-label" data-key="${item.key}"></td>
+                <td><input type="number" value="${item.max}" class="crit-max" min="0" step="0.5"></td>
+                <td style="text-align: center;"><button class="btn btn-sm btn-outline remove-crit" data-index="${index}" style="color:var(--danger); padding:2px 6px; margin:0;">✕</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+        document.querySelectorAll('.crit-max').forEach(input => input.addEventListener('input', calculateModalTotal));
+        calculateModalTotal();
+    }
+
+    function renderEduRows() {
+        const tbody = document.getElementById('eduTableBody');
+        tbody.innerHTML = '';
+        modalEdu.forEach((item, index) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><input type="text" value="${item.qualification}" class="edu-q"></td>
+                <td><input type="number" value="${item.marks}" class="edu-m" min="0" step="0.5"></td>
+                <td style="text-align: center;"><button class="btn btn-sm btn-outline remove-edu" data-index="${index}" style="color:var(--danger); padding:2px 6px; margin:0;">✕</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function renderMemberRows() {
+        const tbody = document.getElementById('membersTableBody');
+        tbody.innerHTML = '';
+        modalMembers.forEach((item, index) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><input type="text" value="${item.role}" class="member-role"></td>
+                <td style="text-align: center;"><button class="btn btn-sm btn-outline remove-member" data-index="${index}" style="color:var(--danger); padding:2px 6px; margin:0;">✕</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function updateLiveFormSignatures() {
+        const sigContainer = document.getElementById('liveSignaturesContainer');
+        if (sigContainer && modalMembers.length > 0) {
+            sigContainer.innerHTML = modalMembers.map(m => `
+                <div><strong>${m.role} SIGNATURE: ____________________</strong></div>
+                <div><strong>DATE: ____________________</strong></div>
+            `).join('');
+        }
+    }
+
+    window.openScoringTemplateModal = async function() {
+        document.getElementById('scoringTemplateStatus').innerText = '';
+        scoringTemplate = await apiClient.getScoringTemplate(); 
+        modalCriteria = JSON.parse(JSON.stringify(scoringTemplate.criteria));
+        modalEdu = JSON.parse(JSON.stringify(scoringTemplate.educationAppendix));
+        const savedMembers = localStorage.getItem('ss_members_live');
+        modalMembers = savedMembers ? JSON.parse(savedMembers) : JSON.parse(JSON.stringify(DEFAULT_MEMBERS));
+        renderCriteriaRows();
+        renderEduRows();
+        renderMemberRows();
+        
+        // Let the backend inject the synced string dynamically.
+        const srvInput = document.getElementById('templateServiceAppendix');
+        if (srvInput) srvInput.value = scoringTemplate.serviceAppendix || '';
+
+        document.getElementById('scoringTemplateModal').classList.add('active');
+    };
+
+    window.saveScoringTemplate = async function() {
+        syncInputsToArrays();
+        let total = calculateModalTotal();
+        if (total !== 100) {
+            const doBalance = confirm(`The matrix currently totals ${total} marks.\n\nDo you want the system to Auto-Balance the flexible criteria so it perfectly equals 100 marks before saving?`);
+            if (doBalance) {
+                document.getElementById('autoBalanceBtn').click();
+                syncInputsToArrays();
+                total = calculateModalTotal();
+            }
+            if (total !== 100) return; 
+        }
+        const criteria = modalCriteria;
+        const educationAppendix = modalEdu;
+        const serviceAppendix = document.getElementById('templateServiceAppendix').value.trim();
+        const status = document.getElementById('scoringTemplateStatus');
+        status.style.color = 'var(--text-muted)';
+        status.innerText = 'Saving configuration...';
+        try {
+            const result = await apiClient.updateScoringTemplate({ criteria, educationAppendix, serviceAppendix });
+            scoringTemplate = result.template;
+            localStorage.setItem('ss_members_live', JSON.stringify(modalMembers));
+            updateLiveFormSignatures();
+            if (typeof renderScoringTemplate === 'function') renderScoringTemplate();
+            closeScoringTemplateModal();
+        } catch (err) {
+            if (status) { status.style.color = 'var(--danger)'; status.textContent = err.message; }
+        }
+    };
+
+    window.closeScoringTemplateModal = function() {
+        document.getElementById('scoringTemplateModal').classList.remove('active');
+    };
+
+    // Override the renderer.js render function so the UI matches dynamically
+    window.renderScoringTemplate = function() {
+        if (!scoringTemplate) return;
+        let total = 0;
+        scoringTemplate.criteria.forEach(item => {
+            total += Number(item.max) || 0;
+            const label = document.getElementById(`score_label_${item.key}`);
+            const maximum = document.getElementById(`score_max_${item.key}`);
+            const input = document.getElementById(`score_${item.key}`);
+            if (label) label.textContent = item.label;
+            if (maximum) maximum.textContent = item.max;
+            if (input) input.max = item.max;
+        });
+        const totalDisplay = document.getElementById('scoreMaxTotalDisplay');
+        if (totalDisplay) totalDisplay.textContent = total;
+        
+        const education = document.getElementById('educationAppendixDisplay');
+        if (education) education.innerHTML = scoringTemplate.educationAppendix.map(item => `<div>${item.qualification} - <strong>${item.marks} marks</strong></div>`).join('') || 'No education appendix entries.';
+        
+        // Sync display logic
+        const service = document.getElementById('serviceAppendixDisplay');
+        const srvInput = document.getElementById('templateServiceAppendix');
+        
+        const serviceCrit = scoringTemplate.criteria.find(c => c.key === 'service');
+        const sMax = serviceCrit ? serviceCrit.max : 18;
+        let sAppx = scoringTemplate.serviceAppendix || `1 mark for every year of service, up to ${sMax} marks.`;
+        sAppx = sAppx.replace(/up to \d+ marks/i, `up to ${sMax} marks`);
+        
+        if (service) service.textContent = sAppx;
+        if (srvInput && !srvInput.value) srvInput.value = sAppx;
+    };
+</script>
 </body>
 </html>

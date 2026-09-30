@@ -3,7 +3,18 @@
   "version": "1.0.0",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "build": "electron-builder --win"
+  },
+  "build": {
+    "appId": "com.prisons.promotionportal",
+    "productName": "Promotion Portal",
+    "win": {
+      "target": "nsis"
+    },
+    "directories": {
+      "output": "dist"
+    }
   },
   "dependencies": {
     "better-sqlite3": "^13.0.3",
@@ -12,7 +23,8 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
-    "electron": "^37.0.0"
+    "electron": "^37.0.0",
+    "electron-builder": "^26.15.3"
   },
   "allowScripts": {
     "better-sqlite3@13.0.3": true,

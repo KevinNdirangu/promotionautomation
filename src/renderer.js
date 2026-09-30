@@ -1418,6 +1418,9 @@ async function loadEligibilityCriteria() {
     
     const cleanYears = document.getElementById('criteriaCleanYears');
     if (cleanYears) cleanYears.value = criteria.cleanRecordYears;
+    
+    const maxOffences = document.getElementById('criteriaMaxOffences');
+    if (maxOffences) maxOffences.value = criteria.maxOffences !== undefined ? criteria.maxOffences : 0;
 }
 
 async function saveEligibilityCriteria() {
@@ -1427,7 +1430,8 @@ async function saveEligibilityCriteria() {
             cutoffDate: document.getElementById('criteriaCutoffDate')?.value,
             minimumYearsService: document.getElementById('criteriaYearsService')?.value,
             minimumYearsCurrentRank: document.getElementById('criteriaYearsRank')?.value,
-            cleanRecordYears: document.getElementById('criteriaCleanYears')?.value
+            cleanRecordYears: document.getElementById('criteriaCleanYears')?.value,
+            maxOffences: document.getElementById('criteriaMaxOffences')?.value
         });
         if (status) {
             status.style.color = '#16a34a';
@@ -1747,9 +1751,16 @@ async function loadMeritRankings() {
                     <td><strong>${r.pf_no}</strong></td>
                     <td>${r.name}</td>
                     <td><span class="badge badge-info">${r.current_rank}</span></td>
-                    <td>${r.rank_applied_for}</td>
-                    <td>${r.gender || ''}</td><td>${r.ethnicity || ''}</td><td>${highestEducation}</td><td>${enlistmentYear}</td><td>${r.date_posted || ''}</td><td>${r.section_deployed || ''}</td><td>${r.home_county || ''}</td><td>${r.station || ''}</td>
+                    <td>${r.gender || ''}</td>
+                    <td>${r.ethnicity || ''}</td>
+                    <td>${highestEducation}</td>
+                    <td>${enlistmentYear}</td>
+                    <td>${r.date_posted || ''}</td>
+                    <td>${r.section_deployed || ''}</td>
+                    <td>${r.home_county || ''}</td>
+                    <td>${r.station || ''}</td>
                     <td style="text-align:center;"><input class="form-control" style="width:82px;text-align:center;" type="number" min="0" max="100" step="0.5" value="${r.total_score ?? ''}" onchange="saveManualReportScore('${r.pf_no}', this.value)"></td>
+                    <td>${r.rank_applied_for}</td>
                 </tr>
             `;
         }).join('');
@@ -1814,201 +1825,6 @@ async function exportReportCandidates() {
     } 
 }
 
-window.loadRegionalCandidates = async function(boardType) {
-    const rankSelect = document.getElementById(boardType === 'STATION' ? 'regionalRankFilter' : 'rbRankFilter');
-    const body = document.getElementById(boardType === 'STATION' ? 'regionalCandidatesBody' : 'rbCandidatesBody');
-    if (!rankSelect || !body) return;
-    try {
-        const all = await apiClient.getRegionalCandidates({ boardType, rankAppliedFor: 'ALL' });
-        regionalDataCache[boardType] = all;
-        const selected = rankSelect.value; 
-        const ranks = [...new Set(all.map(candidate => candidate.rank_applied_for))].sort((a,b) => rankSortValue(a)-rankSortValue(b));
-        rankSelect.innerHTML = `<option value="ALL">All Ranks</option>${ranks.map(rank => `<option value="${rank}">${rank}</option>`).join('')}`; 
-        rankSelect.value = ranks.includes(selected) ? selected : 'ALL';
-        renderRegionalTable(boardType);
-    } catch (err) { body.innerHTML = `<tr><td colspan="10" style="color:var(--danger);text-align:center;">Could not load candidates: ${err.message}</td></tr>`; }
-};
-
-window.debounceRegionalSearch = function() { clearTimeout(window.regionalSearchTimeout); window.regionalSearchTimeout = setTimeout(() => renderRegionalTable('STATION'), 300); };
-window.debounceRbSearch = function() { clearTimeout(window.rbSearchTimeout); window.rbSearchTimeout = setTimeout(() => renderRegionalTable('REGIONAL'), 300); };
-window.debounceFsSearch = function() { clearTimeout(window.fsSearchTimeout); window.fsSearchTimeout = setTimeout(() => window.renderFinalScores(), 300); };
-
-window.loadRegionalSelection = async function() {
-    const rankSelect = document.getElementById('rbRankFilter');
-    const stationSelect = document.getElementById('rbStationFilter');
-    const body = document.getElementById('rbCandidatesBody');
-    if (!rankSelect || !stationSelect || !body) return;
-    try {
-        const all = await apiClient.getRegionalCandidates({ boardType: 'STATION', rankAppliedFor: 'ALL' });
-        regionalDataCache['SELECTION'] = all;
-        
-        const selectedRank = rankSelect.value; 
-        const ranks = [...new Set(all.map(c => c.rank_applied_for))].sort((a,b) => rankSortValue(a)-rankSortValue(b));
-        rankSelect.innerHTML = `<option value="ALL">All Ranks</option>${ranks.map(rank => `<option value="${rank}">${rank}</option>`).join('')}`; 
-        rankSelect.value = ranks.includes(selectedRank) ? selectedRank : 'ALL';
-
-        const selectedStation = stationSelect.value;
-        const stations = [...new Set(all.map(c => c.station))].sort();
-        stationSelect.innerHTML = `<option value="ALL">All Stations</option>${stations.map(station => `<option value="${station}">${station}</option>`).join('')}`; 
-        stationSelect.value = stations.includes(selectedStation) ? selectedStation : 'ALL';
-
-        renderRegionalSelection();
-    } catch (err) { body.innerHTML = `<tr><td colspan="9" style="color:var(--danger);text-align:center;">Could not load candidates: ${err.message}</td></tr>`; }
-};
-
-window.debounceRbSelectionSearch = function() { clearTimeout(window.rbSelectionTimeout); window.rbSelectionTimeout = setTimeout(renderRegionalSelection, 300); };
-
-window.sortRbColumn = function(key) {
-    if (rbSortKey === key) {
-        rbSortDir *= -1;
-    } else {
-        rbSortKey = key;
-        rbSortDir = 1;
-    }
-
-    (regionalDataCache['SELECTION'] || []).sort((a, b) => {
-        if (key === 'serial') return 0;
-        let valA = a[key] ?? '';
-        let valB = b[key] ?? '';
-
-        if (key === 'station_total_score' || key === 'selected_for_regional') {
-            return (Number(valA) - Number(valB)) * rbSortDir;
-        }
-        if (key === 'rank_applied_for') {
-            return (rankSortValue(valA) - rankSortValue(valB)) * rbSortDir;
-        }
-        return String(valA).localeCompare(String(valB), undefined, { numeric: true }) * rbSortDir;
-    });
-
-    renderRegionalSelection();
-};
-
-function renderRegionalSelection() {
-    const rankSelect = document.getElementById('rbRankFilter');
-    const stationSelect = document.getElementById('rbStationFilter');
-    const searchInput = document.getElementById('rbSearchInput');
-    const body = document.getElementById('rbCandidatesBody');
-    if (!body) return;
-    
-    let candidates = regionalDataCache['SELECTION'] || [];
-    if (rankSelect && rankSelect.value !== 'ALL') candidates = candidates.filter(c => c.rank_applied_for === rankSelect.value);
-    if (stationSelect && stationSelect.value !== 'ALL') candidates = candidates.filter(c => c.station === stationSelect.value);
-    
-    const search = (searchInput?.value || '').toLowerCase().trim();
-    if (search) candidates = candidates.filter(c => (c.name || '').toLowerCase().includes(search) || (c.pf_no || '').toLowerCase().includes(search));
-    
-    if (!candidates.length) {
-        body.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--text-muted);">No candidates found.</td></tr>`;
-        return;
-    }
-    
-    body.innerHTML = candidates.map((c, index) => {
-        return `<tr>
-            <td>${index+1}</td>
-            <td>${c.pf_no}</td>
-            <td>${c.name}</td>
-            <td>${c.gender || '--'}</td>
-            <td>${c.ethnicity || '--'}</td>
-            <td>${c.station}</td>
-            <td>${c.rank_applied_for}</td>
-            <td>${c.station_total_score ?? '-'}</td>
-            <td style="text-align:center;">
-                <input type="checkbox" style="transform:scale(1.2);" ${c.selected_for_regional ? 'checked' : ''} onchange="window.updateRegionalCandidate(${c.regional_id},'selected_for_regional',this.checked ? 1 : 0)">
-            </td>
-        </tr>`;
-    }).join('');
-}
-
-window.applyRegionalCutoff = async function() {
-    const cutoff = Number(document.getElementById('rbCutoffInput')?.value);
-    if (isNaN(cutoff) || cutoff < 0) {
-        alert("Please enter a valid cut-off score.");
-        return;
-    }
-    
-    const rankSelect = document.getElementById('rbRankFilter')?.value || 'ALL';
-    const stationSelect = document.getElementById('rbStationFilter')?.value || 'ALL';
-    
-    let candidates = regionalDataCache['SELECTION'] || [];
-    if (rankSelect !== 'ALL') candidates = candidates.filter(c => c.rank_applied_for === rankSelect);
-    if (stationSelect !== 'ALL') candidates = candidates.filter(c => c.station === stationSelect);
-    
-    let updated = 0;
-    for (const c of candidates) {
-        const meetsCutoff = (c.station_total_score ?? 0) >= cutoff;
-        const newStatus = meetsCutoff ? 1 : 0;
-        if (c.selected_for_regional !== newStatus) {
-            await window.updateRegionalCandidate(c.regional_id, 'selected_for_regional', newStatus);
-            c.selected_for_regional = newStatus;
-            updated++;
-        }
-    }
-    
-    alert(`Applied cut-off of ${cutoff} to the selected list. ${updated} candidates updated.`);
-    renderRegionalSelection();
-};
-
-window.exportRegionalSelection = async function() {
-    const rankSelect = document.getElementById('rbRankFilter')?.value || 'ALL';
-    const stationSelect = document.getElementById('rbStationFilter')?.value || 'ALL';
-    try {
-        const res = await apiClient.exportRegionalSelection({ rankAppliedFor: rankSelect, station: stationSelect });
-        if (res && res.message) {
-            alert(res.message);
-        }
-    } catch(e) {
-        alert('Export failed: ' + e.message);
-    }
-};
-
-function renderRegionalTable(boardType) {
-    const rankSelect = document.getElementById(boardType === 'STATION' ? 'regionalRankFilter' : 'rbRankFilter');
-    const searchInput = document.getElementById(boardType === 'STATION' ? 'regionalSearchInput' : 'rbSearchInput');
-    const body = document.getElementById(boardType === 'STATION' ? 'regionalCandidatesBody' : 'rbCandidatesBody');
-    if (!body) return;
-    let candidates = regionalDataCache[boardType] || [];
-    
-    if (rankSelect && rankSelect.value !== 'ALL') {
-        candidates = candidates.filter(c => c.rank_applied_for === rankSelect.value);
-    }
-    
-    const search = (searchInput?.value || '').toLowerCase().trim();
-    if (search) {
-        candidates = candidates.filter(c => (c.name || '').toLowerCase().includes(search) || (c.pf_no || '').toLowerCase().includes(search));
-    }
-    
-    if (!candidates.length) {
-        body.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--text-muted);">No candidates found.</td></tr>`;
-        return;
-    }
-    
-    body.innerHTML = candidates.map((candidate, index) => {
-        if (boardType === 'STATION') {
-            return `<tr>
-                <td>${index+1}</td>
-                <td>${candidate.pf_no}</td>
-                <td>${candidate.name}</td>
-                <td>${candidate.station}</td>
-                <td>${candidate.current_rank}</td>
-                <td>${candidate.rank_applied_for}</td>
-                <td>${candidate.highest_education || ''}</td>
-                <td><input class="form-control" style="width:90px" type="number" min="0" max="100" step="0.5" value="${candidate.station_total_score ?? ''}" onchange="window.updateRegionalCandidate(${candidate.regional_id},'station_total_score',this.value)"></td>
-            </tr>`;
-        } else {
-            return `<tr>
-                <td>${index+1}</td>
-                <td>${candidate.board_number || ''}</td>
-                <td>${candidate.pf_no}</td>
-                <td>${candidate.name}</td>
-                <td>${candidate.station}</td>
-                <td>${candidate.current_rank}</td>
-                <td>${candidate.rank_applied_for}</td>
-                <td>${candidate.highest_education || ''}</td>
-                <td><input class="form-control" style="width:90px" type="number" min="0" max="100" step="0.5" value="${candidate.regional_total_score ?? ''}" onchange="window.updateRegionalCandidate(${candidate.regional_id},'regional_total_score',this.value)"></td>
-            </tr>`;
-        }
-    }).join('');
-}
 // --- SYSTEM TOOLS & DATA CLEANUP ---
 window.loadCleanupTables = async function() {
     const statusEl = document.getElementById('cleanupStatus');
@@ -2077,104 +1893,6 @@ window.deleteSelectedTables = async function() {
         if (statusEl) { statusEl.style.color = 'var(--danger)'; statusEl.innerText = `Error: ${err.message}`; }
     }
 };
-window.importRegionalFiles = async function(boardType) { 
-    const inputId = boardType === 'STATION' ? 'regionalFilesInput' : 'rbFilesInput';
-    const stationInputId = boardType === 'STATION' ? 'regionalStationInput' : 'rbStationInput';
-    const input = document.getElementById(inputId);
-    const stationInput = document.getElementById(stationInputId);
-    const boardInput = document.getElementById('rbBoardInput');
-    if (!input || !input.files.length) return; 
-    try { 
-        let count = 0; 
-        for (const file of Array.from(input.files)) { 
-            const path = window.api?.getFilePath ? window.api.getFilePath(file) : file.path; 
-            count += (await apiClient.importRegionalCandidates(path, boardType, stationInput ? stationInput.value : '', boardInput ? boardInput.value : '')).count; 
-        } 
-        input.value = ''; 
-        await window.loadRegionalCandidates(boardType); 
-        alert(`${count} candidate record(s) imported.`); 
-    } catch(err) { alert(`Could not import results: ${err.message}`); } 
-};
-
-window.updateRegionalCandidate = async function(id, field, value) { 
-    try { 
-        await apiClient.updateRegionalCandidate({id,field,value}); 
-    } catch(err) { 
-        alert(`Could not save entry: ${err.message}`); 
-    } 
-};
-
-window.loadFinalScores = async function() {
-    const rankSelect = document.getElementById('fsRankFilter');
-    const stationSelect = document.getElementById('fsStationFilter');
-    const body = document.getElementById('fsCandidatesBody');
-    if (!rankSelect || !stationSelect || !body) return;
-    
-    try {
-        const all = await apiClient.getRegionalCandidates({ boardType: 'STATION', rankAppliedFor: 'ALL' });
-        finalScoresCache = all;
-        
-        const selectedRank = rankSelect.value;
-        const ranks = [...new Set(all.map(c => c.rank_applied_for))].sort((a,b) => rankSortValue(a)-rankSortValue(b));
-        rankSelect.innerHTML = `<option value="ALL">All Ranks</option>${ranks.map(rank => `<option value="${rank}">${rank}</option>`).join('')}`;
-        rankSelect.value = ranks.includes(selectedRank) ? selectedRank : 'ALL';
-
-        const selectedStation = stationSelect.value;
-        const stations = [...new Set(all.map(c => c.station))].sort();
-        stationSelect.innerHTML = `<option value="ALL">All Stations</option>${stations.map(station => `<option value="${station}">${station}</option>`).join('')}`;
-        stationSelect.value = stations.includes(selectedStation) ? selectedStation : 'ALL';
-        
-        window.renderFinalScores();
-    } catch (err) {
-        body.innerHTML = `<tr><td colspan="8" style="color:var(--danger);text-align:center;">Could not load candidates: ${err.message}</td></tr>`;
-    }
-};
-
-window.renderFinalScores = function() {
-    const rankSelect = document.getElementById('fsRankFilter');
-    const stationSelect = document.getElementById('fsStationFilter');
-    const searchInput = document.getElementById('fsSearchInput');
-    const body = document.getElementById('fsCandidatesBody');
-    if (!body) return;
-    
-    let candidates = finalScoresCache || [];
-    if (rankSelect && rankSelect.value !== 'ALL') candidates = candidates.filter(c => c.rank_applied_for === rankSelect.value);
-    if (stationSelect && stationSelect.value !== 'ALL') candidates = candidates.filter(c => c.station === stationSelect.value);
-    
-    const search = (searchInput?.value || '').toLowerCase().trim();
-    if (search) candidates = candidates.filter(c => (c.name || '').toLowerCase().includes(search) || (c.pf_no || '').toLowerCase().includes(search));
-    
-    if (!candidates.length) {
-        body.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--text-muted);">No candidates found.</td></tr>`;
-        return;
-    }
-    
-    body.innerHTML = candidates.map((c, index) => {
-        return `<tr>
-            <td>${index+1}</td>
-            <td>${c.pf_no}</td>
-            <td>${c.name}</td>
-            <td>${c.station}</td>
-            <td>${c.current_rank}</td>
-            <td>${c.rank_applied_for}</td>
-            <td><input class="form-control" style="width:90px; font-weight:bold; color:var(--primary);" type="number" min="0" max="100" step="0.5" value="${c.station_total_score ?? ''}" onchange="window.updateRegionalCandidate(${c.regional_id},'station_total_score',this.value)"></td>
-            <td><input class="form-control" style="width:90px; font-weight:bold; color:var(--success);" type="number" min="0" max="100" step="0.5" value="${c.regional_total_score ?? ''}" onchange="window.updateRegionalCandidate(${c.regional_id},'regional_total_score',this.value)"></td>
-        </tr>`;
-    }).join('');
-};
-
-window.exportFinalScores = async function() { 
-    const rankSelect = document.getElementById('fsRankFilter')?.value || 'ALL';
-    const stationSelect = document.getElementById('fsStationFilter')?.value || 'ALL';
-    try {
-        const res = await apiClient.exportFinalScores({ rankAppliedFor: rankSelect, station: stationSelect });
-        if (res && res.message) {
-            alert(res.message);
-        }
-    } catch(e) {
-        alert('Export failed: ' + e.message);
-    }
-};
 
 document.addEventListener('DOMContentLoaded', async () => {
     setupSidebarToggle();
@@ -2198,8 +1916,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (lastPage && document.getElementById(lastPage)) {
             navigateTo(lastPage, document.querySelector(`.nav-link[onclick*="${lastPage}"]`));
         }
-    } else if (filename === 'rc-dashboard.html') {
-        window.loadRegionalDashboardStats();
     } else if (filename === 'nominal-roll.html') {
         loadDashboardStats();
         loadNominalRollTable();
@@ -2211,14 +1927,5 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.loadScoringRanks();
     } else if (filename === 'merit-rankings.html') {
         loadReportRankOptions(true);
-    } else if (filename === 'rc-stations-scores.html') {
-        initTableScrollSync('regionalTableTopScroll', 'regionalTableContainer', 'regionalTableTopScrollInner');
-        window.loadRegionalCandidates('STATION');
-    } else if (filename === 'regional-boards.html') {
-        window.loadRegionalSelection();
-    } else if (filename === 'regional-scoring.html') {
-        window.loadRegionalScoringBoards().then(() => window.loadScoringRanks()); 
-    } else if (filename === 'final-scores.html') {
-        window.loadFinalScores();
     }
 });
