@@ -102,7 +102,7 @@ const PROMOTION_RANKS = ['PC', 'CPL', 'SGT', 'S/SGT', 'IP', 'CIP', 'ASP', 'SP', 
 const DEFAULT_SCORING_TEMPLATE = {
     criteria: [
         { key: 'education', label: 'Education', max: 20 },
-        { key: 'service', label: 'Length of Service', max: 18 },
+        { key: 'service', label: 'Length of Service', max: 'AUTO' },
         { key: 'turnout', label: 'Turnout Presentation Appearance and Dress', max: 15 },
         { key: 'knowledge', label: 'Knowledge of Prison Work', max: 25 },
         { key: 'current_affairs', label: 'Current Affairs Knowledge of GOK', max: 13 },
@@ -141,15 +141,21 @@ function updateScoringTemplate(template) {
     if (!template || !Array.isArray(template.criteria) || template.criteria.map(item => item.key).join('|') !== expectedKeys.join('|')) {
         throw new Error('The score sheet must retain all seven required scoring fields.');
     }
-    const criteria = template.criteria.map(item => ({
-        key: item.key,
-        label: String(item.label || '').trim() || DEFAULT_SCORING_TEMPLATE.criteria.find(defaultItem => defaultItem.key === item.key).label,
-        max: Math.max(0, Number(item.max) || 0)
-    }));
+    const criteria = template.criteria.map(item => {
+        const isAuto = item.max === 'AUTO';
+        return {
+            key: item.key,
+            label: String(item.label || '').trim() || DEFAULT_SCORING_TEMPLATE.criteria.find(defaultItem => defaultItem.key === item.key).label,
+            max: isAuto ? 'AUTO' : Math.max(0, Number(item.max) || 0)
+        };
+    });
     
-    const total = criteria.reduce((sum, item) => sum + item.max, 0);
-    if (Math.abs(total - 100) > 0.001) {
-        throw new Error(`The marking scheme must total 100 marks; it currently totals ${total}.`);
+    const hasDynamic = criteria.some(c => c.max === 'AUTO');
+    if (!hasDynamic) {
+        const total = criteria.reduce((sum, item) => sum + (Number(item.max) || 0), 0);
+        if (Math.abs(total - 100) > 0.001) {
+            throw new Error(`The marking scheme must total 100 marks; it currently totals ${total}.`);
+        }
     }
     
     const educationAppendix = (Array.isArray(template.educationAppendix) ? template.educationAppendix : []).map(item => ({
@@ -157,12 +163,15 @@ function updateScoringTemplate(template) {
         marks: Math.max(0, Number(item.marks) || 0)
     })).filter(item => item.qualification);
 
-    // Sync "up to X marks" in the service appendix text with the actual max mark configured
-    const serviceCrit = criteria.find(c => c.key === 'service');
-    const sMax = serviceCrit ? serviceCrit.max : 18;
     let serviceAppx = String(template.serviceAppendix || '').trim();
-    if (!serviceAppx) serviceAppx = `1 mark for every year of service, up to ${sMax} marks.`;
-    serviceAppx = serviceAppx.replace(/up to \d+ marks/i, `up to ${sMax} marks`);
+    if (!hasDynamic) {
+        const serviceCrit = criteria.find(c => c.key === 'service');
+        const sMax = serviceCrit ? serviceCrit.max : 18;
+        if (!serviceAppx) serviceAppx = `1 mark for every year of service, up to ${sMax} marks.`;
+        serviceAppx = serviceAppx.replace(/up to \d+ marks/i, `up to ${sMax} marks`);
+    } else {
+        if (!serviceAppx) serviceAppx = `1 mark for every year of service, up to 18 marks.`;
+    }
 
     const clean = {
         criteria,
@@ -887,9 +896,12 @@ function saveInterviewScore(data) {
     const template = getScoringTemplate();
     const scores = Object.fromEntries(template.criteria.map(item => {
         const supplied = Math.max(0, parseFloat(data[`${item.key}_score`]) || 0);
-        if (supplied > item.max) throw new Error(`${item.label} cannot exceed ${item.max} marks.`);
+        if (item.max !== 'AUTO' && supplied > Number(item.max)) {
+            throw new Error(`${item.label} cannot exceed ${item.max} marks.`);
+        }
         return [item.key, supplied];
     }));
+    
     const { education: edu, service: srv, turnout: trn, knowledge: knw, current_affairs: cur, clean_record: cln, commendations: com } = scores;
     const remarks = (data.remarks || '').trim();
 
@@ -948,6 +960,20 @@ async function exportInterviewScoreSheets(filePath, filters = {}) {
         candidates = getCandidatesForScoring('ALL');
     }
 
+    // Sort candidates by Rank order (PC -> CPL -> SGT etc.), then by Name
+    candidates.sort((a, b) => {
+        const rankA = PROMOTION_RANKS.indexOf(normalizeRank(a.rank_applied_for));
+        const rankB = PROMOTION_RANKS.indexOf(normalizeRank(b.rank_applied_for));
+        
+        const weightA = rankA === -1 ? PROMOTION_RANKS.length : rankA;
+        const weightB = rankB === -1 ? PROMOTION_RANKS.length : rankB;
+
+        if (weightA !== weightB) {
+            return weightA - weightB;
+        }
+        return (a.name || '').localeCompare(b.name || '');
+    });
+
     if (!candidates.length) {
         throw new Error('No qualified applicants were found for this export choice.');
     }
@@ -959,6 +985,70 @@ async function exportInterviewScoreSheets(filePath, filters = {}) {
     const monthNames = ['', 'JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'];
     const promoMonth = monthNames[parseInt(settings.promotion_month, 10) || 1] || 'JANUARY';
     const promoYear = settings.promotion_year || '2026';
+
+    const currentYear = parseInt(settings.promotion_year) || new Date().getFullYear();
+    const templatesByRank = {};
+    
+    // Evaluate if the saved template is actually using the AUTO dynamic mode
+    const candidateBaseCriteria = template.criteria;
+    const serviceBase = candidateBaseCriteria.find(c => c.key === 'service');
+    const isAutoService = serviceBase && serviceBase.max === 'AUTO';
+    
+    const getDynamicTemplateForRank = (rank, allCandidates) => {
+        if (templatesByRank[rank]) return templatesByRank[rank];
+        
+        const dynamicTemplate = JSON.parse(JSON.stringify(template));
+        
+        if (isAutoService) {
+            const rankCandidates = allCandidates.filter(c => normalizeRank(c.rank_applied_for) === normalizeRank(rank));
+            let maxYears = 0;
+            rankCandidates.forEach(c => {
+                const pfStr = String(c.pf_no).trim();
+                if (pfStr.length >= 4) {
+                    const enlistYear = parseInt(pfStr.substring(0, 4), 10);
+                    if (!isNaN(enlistYear) && enlistYear > 1900 && enlistYear <= currentYear) {
+                        const years = currentYear - enlistYear;
+                        if (years > maxYears) maxYears = years;
+                    }
+                }
+            });
+            
+            if (maxYears <= 0) maxYears = 18; // Fallback to 18 if no valid tenures found
+            
+            const serviceCrit = dynamicTemplate.criteria.find(c => c.key === 'service');
+            if (serviceCrit) serviceCrit.max = maxYears;
+            
+            const eduCrit = dynamicTemplate.criteria.find(c => c.key === 'education');
+            const eduMax = eduCrit ? (Number(eduCrit.max) || 0) : 0;
+            
+            const flexibleCriteria = dynamicTemplate.criteria.filter(c => c.key !== 'service' && c.key !== 'education');
+            const remaining = 100 - (maxYears + eduMax);
+            const flexSum = flexibleCriteria.reduce((sum, c) => sum + (Number(c.max) || 0), 0);
+            
+            if (flexSum > 0 && remaining > 0) {
+                let distSum = 0;
+                flexibleCriteria.forEach(c => {
+                    const prop = Math.round(((Number(c.max) || 0) / flexSum) * remaining);
+                    c.max = prop;
+                    distSum += prop;
+                });
+                const diff = remaining - distSum;
+                if (diff !== 0) {
+                    let largest = flexibleCriteria[0];
+                    flexibleCriteria.forEach(c => { if ((Number(c.max) || 0) > (Number(largest.max) || 0)) largest = c; });
+                    largest.max = (Number(largest.max) || 0) + diff;
+                }
+            } else if (remaining <= 0) {
+                flexibleCriteria.forEach(c => c.max = 0);
+            }
+            
+            let sAppx = dynamicTemplate.serviceAppendix || `1 mark for every year of service, up to ${maxYears} marks.`;
+            dynamicTemplate.serviceAppendix = sAppx.replace(/up to \d+ marks/i, `up to ${maxYears} marks`);
+        }
+        
+        templatesByRank[rank] = dynamicTemplate;
+        return dynamicTemplate;
+    };
 
     const sections = [];
 
@@ -984,12 +1074,6 @@ async function exportInterviewScoreSheets(filePath, filters = {}) {
         });
     };
 
-    // Calculate Dynamic Service Appendix String so that the "up to X marks" part matches the criteria
-    const serviceCriterion = template.criteria.find(c => c.key === 'service');
-    const serviceMaxMarks = serviceCriterion ? serviceCriterion.max : 18;
-    let serviceAppxText = String(template.serviceAppendix || `1 mark for every year of service, up to ${serviceMaxMarks} marks.`).replace(/[\r\n\t\x00-\x1F]/g, ' ');
-    serviceAppxText = serviceAppxText.replace(/up to \d+ marks/i, `up to ${serviceMaxMarks} marks`);
-
     for (const candidate of candidates) {
         let stationName = String(candidate.station || settings.station_name || '').trim().toUpperCase();
         if (stationName && !stationName.includes('PRISON') && !stationName.includes('COMMAND') && !stationName.includes('HQ')) {
@@ -999,6 +1083,8 @@ async function exportInterviewScoreSheets(filePath, filters = {}) {
         
         let stationHeader = `${stationName} INTERVIEW`;
         const targetRank = String(candidate.rank_applied_for || 'CPL').toUpperCase();
+
+        const currentTemplate = getDynamicTemplateForRank(targetRank, candidates);
 
         const children = [];
 
@@ -1101,7 +1187,7 @@ async function exportInterviewScoreSheets(filePath, filters = {}) {
         ];
 
         let totalMax = 0;
-        template.criteria.forEach((item, idx) => {
+        currentTemplate.criteria.forEach((item, idx) => {
             totalMax += Number(item.max) || 0;
             
             const awardedScore = (candidate[`${item.key}_score`] !== undefined && candidate[`${item.key}_score`] !== null) 
@@ -1156,7 +1242,7 @@ async function exportInterviewScoreSheets(filePath, filters = {}) {
             })
         );
 
-        const eduTableRows = (template.educationAppendix || []).map(edu => new TableRow({
+        const eduTableRows = (currentTemplate.educationAppendix || []).map(edu => new TableRow({
             children: [
                 new TableCell({
                     borders: cellBorderConfig,
@@ -1195,6 +1281,8 @@ async function exportInterviewScoreSheets(filePath, filters = {}) {
                 ]
             })
         );
+
+        let serviceAppxText = String(currentTemplate.serviceAppendix).replace(/[\r\n\t\x00-\x1F]/g, ' ');
 
         children.push(
             new Paragraph({

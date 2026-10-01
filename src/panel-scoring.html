@@ -366,7 +366,7 @@
   <div class="modal-overlay" id="scoringTemplateModal">
     <div class="modal-box">
       <div class="modal-header">
-        <h3 class="modal-title">Configure Assessment Settings</h3>
+        <h3 class="modal-title">Step 2: Configure Assessment Settings</h3>
         <button class="modal-close" onclick="closeScoringTemplateModal()">&times;</button>
       </div>
 
@@ -377,16 +377,25 @@
           <button class="tab-btn" data-tab="tab-service">Service Appendix</button>
           <button class="tab-btn" data-tab="tab-members">Board Members</button>
         </div>
+        
         <div id="tab-criteria" class="tab-content active">
+          <div style="margin-bottom: 15px; background: #eff6ff; padding: 10px; border-radius: 4px; border: 1px solid #bfdbfe;">
+            <label style="margin: 0; font-weight: normal; font-size: 13px; display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <input type="checkbox" id="autoServiceToggle" style="width: auto;">
+                Automatically calculate 'Length of Service' max marks (Dynamic by Rank)
+            </label>
+          </div>
+          
           <table class="settings-table">
             <thead>
-              <tr><th>Criteria Name</th><th style="width: 80px;">Max Marks</th><th style="width: 50px; text-align: center;">Action</th></tr>
+              <tr><th>Criteria Name</th><th style="width: 100px;">Max Marks</th><th style="width: 50px; text-align: center;">Action</th></tr>
             </thead>
             <tbody id="criteriaTableBody"></tbody>
           </table>
           <button id="addCriteriaBtn" class="btn btn-sm btn-secondary">+ Add Criterion</button>
-          <p style="font-size: 11.5px; color: var(--warning); margin-top: 8px;">Note: Adding/Removing core criteria fields here may be restricted by HQ database constraints. Mark totals will auto-sync.</p>
+          <p style="font-size: 11.5px; color: var(--warning); margin-top: 8px;">Note: The final document will dynamically adjust Length of Service marks based on the highest serving candidate per rank, auto-balancing the remaining flexible criteria to exactly 100.</p>
         </div>
+        
         <div id="tab-edu" class="tab-content">
           <table class="settings-table">
             <thead>
@@ -396,10 +405,12 @@
           </table>
           <button id="addEduBtn" class="btn btn-sm btn-secondary">+ Add Qualification</button>
         </div>
+        
         <div id="tab-service" class="tab-content">
           <label class="form-label" style="margin-top: 10px;">Length of Service Description</label>
           <textarea id="templateServiceAppendix" class="form-control" rows="4" placeholder="Describe how service marks are awarded..."></textarea>
         </div>
+        
         <div id="tab-members" class="tab-content">
           <table class="settings-table">
             <thead>
@@ -410,6 +421,7 @@
           <button id="addMemberBtn" class="btn btn-sm btn-secondary">+ Add Member</button>
         </div>
       </div>
+      
       <div class="modal-footer">
         <span id="criteriaTotalDisplay" style="margin-right: auto; font-weight: bold; font-size: 13px;">Total Marks: 100</span>
         <div style="display: flex; gap: 8px; align-items: center;">
@@ -467,6 +479,13 @@
     let modalEdu = [];
     let modalMembers = [];
 
+    const autoServiceToggle = document.getElementById('autoServiceToggle');
+    if (autoServiceToggle) {
+        autoServiceToggle.addEventListener('change', () => {
+            renderCriteriaRows();
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -508,25 +527,30 @@
         });
 
         document.getElementById('autoBalanceBtn').addEventListener('click', () => {
+            if (autoServiceToggle.checked) {
+                alert("Auto-balance is handled dynamically at generation when 'Length of Service' is set to Auto.");
+                return;
+            }
+            
             syncInputsToArrays();
             const eduIndex = modalCriteria.findIndex(c => c.label.toUpperCase().includes('EDUCATION'));
             const servIndex = modalCriteria.findIndex(c => c.label.toUpperCase().includes('SERVICE') && !c.label.toUpperCase().includes('CLEAN'));
             let fixedSum = 0;
-            if (eduIndex >= 0) fixedSum += modalCriteria[eduIndex].max;
-            if (servIndex >= 0) fixedSum += modalCriteria[servIndex].max;
+            if (eduIndex >= 0) fixedSum += (Number(modalCriteria[eduIndex].max) || 0);
+            if (servIndex >= 0) fixedSum += (Number(modalCriteria[servIndex].max) || 0);
             const remainingTarget = 100 - fixedSum;
             const flexibleIndices = [];
             let flexibleBaseSum = 0;
             modalCriteria.forEach((c, idx) => {
                 if (idx !== eduIndex && idx !== servIndex) {
                     flexibleIndices.push(idx);
-                    flexibleBaseSum += c.max;
+                    flexibleBaseSum += (Number(c.max) || 0);
                 }
             });
             if (flexibleIndices.length > 0 && flexibleBaseSum > 0 && remainingTarget > 0) {
                 let distributedSum = 0;
                 flexibleIndices.forEach(idx => {
-                    const proportionalMax = Math.round((modalCriteria[idx].max / flexibleBaseSum) * remainingTarget);
+                    const proportionalMax = Math.round(((Number(modalCriteria[idx].max) || 0) / flexibleBaseSum) * remainingTarget);
                     modalCriteria[idx].max = proportionalMax;
                     distributedSum += proportionalMax;
                 });
@@ -534,9 +558,9 @@
                 if (diff !== 0) {
                     let largestIdx = flexibleIndices[0];
                     flexibleIndices.forEach(idx => {
-                        if (modalCriteria[idx].max > modalCriteria[largestIdx].max) largestIdx = idx;
+                        if ((Number(modalCriteria[idx].max) || 0) > (Number(modalCriteria[largestIdx].max) || 0)) largestIdx = idx;
                     });
-                    modalCriteria[largestIdx].max += diff;
+                    modalCriteria[largestIdx].max = (Number(modalCriteria[largestIdx].max) || 0) + diff;
                 }
                 renderCriteriaRows();
             } else {
@@ -560,11 +584,15 @@
     });
 
     function syncInputsToArrays() {
-        modalCriteria = Array.from(document.querySelectorAll('#criteriaTableBody tr')).map(row => ({
-            key: row.querySelector('.crit-label').dataset.key || `custom_${Date.now()}`,
-            label: row.querySelector('.crit-label').value.trim(),
-            max: parseFloat(row.querySelector('.crit-max').value) || 0
-        }));
+        modalCriteria = Array.from(document.querySelectorAll('#criteriaTableBody tr')).map(row => {
+            const inputMax = row.querySelector('.crit-max');
+            const maxVal = (inputMax.hasAttribute('readonly') && inputMax.dataset.val === 'AUTO') ? 'AUTO' : (parseFloat(inputMax.value) || 0);
+            return {
+                key: row.querySelector('.crit-label').dataset.key || `custom_${Date.now()}`,
+                label: row.querySelector('.crit-label').value.trim(),
+                max: maxVal
+            };
+        });
         modalEdu = Array.from(document.querySelectorAll('#eduTableBody tr')).map(row => ({
             qualification: row.querySelector('.edu-q').value.trim(),
             marks: parseFloat(row.querySelector('.edu-m').value) || 0
@@ -575,14 +603,27 @@
     }
 
     function calculateModalTotal() {
-        let total = 0;
-        document.querySelectorAll('.crit-max').forEach(input => { total += parseFloat(input.value) || 0; });
+        let baseTotal = 0;
+        let hasDynamic = false;
+        document.querySelectorAll('.crit-max').forEach(input => {
+            if (input.dataset.val === 'AUTO') {
+                hasDynamic = true;
+            } else {
+                baseTotal += parseFloat(input.value) || 0;
+            }
+        });
+        
         const display = document.getElementById('criteriaTotalDisplay');
         if (display) {
-            display.innerText = `Total Marks: ${total}`;
-            display.style.color = total === 100 ? 'var(--success)' : 'var(--danger)';
+            if (hasDynamic) {
+                display.innerText = `Base Marks: ${baseTotal} (Auto-balances at generation)`;
+                display.style.color = 'var(--accent)';
+            } else {
+                display.innerText = `Total Marks: ${baseTotal}`;
+                display.style.color = baseTotal === 100 ? 'var(--success)' : 'var(--danger)';
+            }
         }
-        return total;
+        return baseTotal;
     }
 
     function renderCriteriaRows() {
@@ -590,14 +631,28 @@
         tbody.innerHTML = '';
         modalCriteria.forEach((item, index) => {
             const tr = document.createElement('tr');
+            const isService = item.label.toUpperCase().includes('SERVICE') && !item.label.toUpperCase().includes('CLEAN');
+            
+            let displayMax = item.max;
+            if (isService && autoServiceToggle.checked) {
+                displayMax = 'AUTO';
+            } else if (isService && displayMax === 'AUTO') {
+                displayMax = 18; 
+                item.max = 18; 
+            }
+            
+            const inputHtml = (isService && autoServiceToggle.checked)
+                ? `<input type="text" value="Auto (by rank)" class="crit-max" readonly style="background: #f1f5f9; color: var(--accent); font-size: 11px; font-weight: bold; width: 100%;" data-val="AUTO">`
+                : `<input type="number" value="${displayMax}" class="crit-max" data-val="${displayMax}" min="0" step="0.5">`;
+
             tr.innerHTML = `
-                <td><input type="text" value="${item.label}" class="crit-label" data-key="${item.key}"></td>
-                <td><input type="number" value="${item.max}" class="crit-max" min="0" step="0.5"></td>
-                <td style="text-align: center;"><button class="btn btn-sm btn-outline remove-crit" data-index="${index}" style="color:var(--danger); padding:2px 6px; margin:0;">✕</button></td>
+                <td><input type="text" value="${item.label}" class="crit-label" data-key="${item.key}" ${isService && autoServiceToggle.checked ? 'readonly style="background:#f1f5f9; color:#64748b;"' : ''}></td>
+                <td>${inputHtml}</td>
+                <td style="text-align: center;">${isService ? '' : `<button class="btn btn-sm btn-outline remove-crit" data-index="${index}" style="color:var(--danger); padding:2px 6px; margin:0;">✕</button>`}</td>
             `;
             tbody.appendChild(tr);
         });
-        document.querySelectorAll('.crit-max').forEach(input => input.addEventListener('input', calculateModalTotal));
+        document.querySelectorAll('.crit-max:not([readonly])').forEach(input => input.addEventListener('input', calculateModalTotal));
         calculateModalTotal();
     }
 
@@ -640,16 +695,29 @@
 
     window.openScoringTemplateModal = async function() {
         document.getElementById('scoringTemplateStatus').innerText = '';
-        scoringTemplate = await apiClient.getScoringTemplate(); 
+        
+        let freshTemplate = await apiClient.getScoringTemplate(); 
+        
+        // We load the raw database template into the modal editor so the user sees their actual settings,
+        // not the rank-specific dynamic overrides used by the live UI.
+        scoringTemplate = freshTemplate; 
+
         modalCriteria = JSON.parse(JSON.stringify(scoringTemplate.criteria));
         modalEdu = JSON.parse(JSON.stringify(scoringTemplate.educationAppendix));
         const savedMembers = localStorage.getItem('ss_members_live');
         modalMembers = savedMembers ? JSON.parse(savedMembers) : JSON.parse(JSON.stringify(DEFAULT_MEMBERS));
+        
+        const serviceCrit = modalCriteria.find(c => c.label.toUpperCase().includes('SERVICE') && !c.label.toUpperCase().includes('CLEAN'));
+        if (serviceCrit && serviceCrit.max === 'AUTO') {
+            autoServiceToggle.checked = true;
+        } else {
+            autoServiceToggle.checked = false;
+        }
+
         renderCriteriaRows();
         renderEduRows();
         renderMemberRows();
         
-        // Let the backend inject the synced string dynamically.
         const srvInput = document.getElementById('templateServiceAppendix');
         if (srvInput) srvInput.value = scoringTemplate.serviceAppendix || '';
 
@@ -658,27 +726,42 @@
 
     window.saveScoringTemplate = async function() {
         syncInputsToArrays();
-        let total = calculateModalTotal();
-        if (total !== 100) {
-            const doBalance = confirm(`The matrix currently totals ${total} marks.\n\nDo you want the system to Auto-Balance the flexible criteria so it perfectly equals 100 marks before saving?`);
-            if (doBalance) {
-                document.getElementById('autoBalanceBtn').click();
-                syncInputsToArrays();
-                total = calculateModalTotal();
+        const hasDynamic = modalCriteria.some(c => c.max === 'AUTO');
+        
+        if (!hasDynamic) {
+            let total = calculateModalTotal();
+            if (total !== 100) {
+                const doBalance = confirm(`The matrix currently totals ${total} marks.\n\nDo you want the system to Auto-Balance the flexible criteria so it perfectly equals 100 marks before saving?`);
+                if (doBalance) {
+                    document.getElementById('autoBalanceBtn').click();
+                    syncInputsToArrays();
+                    total = calculateModalTotal();
+                }
+                if (total !== 100) return; 
             }
-            if (total !== 100) return; 
         }
+
         const criteria = modalCriteria;
         const educationAppendix = modalEdu;
         const serviceAppendix = document.getElementById('templateServiceAppendix').value.trim();
         const status = document.getElementById('scoringTemplateStatus');
+        
         status.style.color = 'var(--text-muted)';
         status.innerText = 'Saving configuration...';
+        
         try {
             const result = await apiClient.updateScoringTemplate({ criteria, educationAppendix, serviceAppendix });
-            scoringTemplate = result.template;
+            
+            // Re-apply the dynamic logic for the currently loaded candidates to reflect in the UI immediately
+            let finalTemplate = result.template;
+            if (window.applyDynamicServiceMax && window.activeScoringCandidates && window.activeScoringCandidates.length > 0) {
+                finalTemplate = window.applyDynamicServiceMax(window.activeScoringCandidates, finalTemplate);
+            }
+            scoringTemplate = finalTemplate;
+
             localStorage.setItem('ss_members_live', JSON.stringify(modalMembers));
             updateLiveFormSignatures();
+            
             if (typeof renderScoringTemplate === 'function') renderScoringTemplate();
             closeScoringTemplateModal();
         } catch (err) {
@@ -694,17 +777,28 @@
     window.renderScoringTemplate = function() {
         if (!scoringTemplate) return;
         let total = 0;
+        
         scoringTemplate.criteria.forEach(item => {
-            total += Number(item.max) || 0;
+            const isAuto = item.max === 'AUTO';
+            total += isAuto ? 0 : (Number(item.max) || 0);
             const label = document.getElementById(`score_label_${item.key}`);
             const maximum = document.getElementById(`score_max_${item.key}`);
             const input = document.getElementById(`score_${item.key}`);
+            
             if (label) label.textContent = item.label;
-            if (maximum) maximum.textContent = item.max;
-            if (input) input.max = item.max;
+            if (maximum) maximum.textContent = isAuto ? 'AUTO' : item.max;
+            if (input) {
+                if (isAuto) {
+                    input.removeAttribute('max');
+                } else {
+                    input.max = item.max;
+                }
+            }
         });
+        
         const totalDisplay = document.getElementById('scoreMaxTotalDisplay');
-        if (totalDisplay) totalDisplay.textContent = total;
+        const hasDynamic = scoringTemplate.criteria.some(c => c.max === 'AUTO');
+        if (totalDisplay) totalDisplay.textContent = hasDynamic ? 'AUTO' : total;
         
         const education = document.getElementById('educationAppendixDisplay');
         if (education) education.innerHTML = scoringTemplate.educationAppendix.map(item => `<div>${item.qualification} - <strong>${item.marks} marks</strong></div>`).join('') || 'No education appendix entries.';

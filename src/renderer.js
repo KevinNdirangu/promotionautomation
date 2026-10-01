@@ -280,6 +280,63 @@ function rankSortValue(value) {
     return index === -1 ? PROMOTION_RANK_ORDER.length : index;
 }
 
+window.applyDynamicServiceMax = function(candidates, baseTemplate) {
+    if (!candidates || candidates.length === 0 || !baseTemplate) return baseTemplate;
+    
+    const template = JSON.parse(JSON.stringify(baseTemplate)); // Deep copy to prevent DB mutation
+    const serviceCrit = template.criteria.find(c => c.key === 'service');
+
+    // ONLY DYNAMICALLY BALANCE IF USER HAS TOGGLED "AUTO"
+    if (serviceCrit && serviceCrit.max === 'AUTO') {
+        const currentYear = currentPromotionYear || new Date().getFullYear();
+        let maxYears = 0;
+        
+        candidates.forEach(c => {
+            const pfStr = String(c.pf_no).trim();
+            if (pfStr.length >= 4) {
+                const enlistYear = parseInt(pfStr.substring(0, 4), 10);
+                if (!isNaN(enlistYear) && enlistYear > 1900 && enlistYear <= currentYear) {
+                    const years = currentYear - enlistYear;
+                    if (years > maxYears) maxYears = years;
+                }
+            }
+        });
+
+        if (maxYears <= 0) maxYears = 18; // Fallback if no valid tenures found
+
+        serviceCrit.max = maxYears;
+        
+        const eduCrit = template.criteria.find(c => c.key === 'education');
+        const eduMax = eduCrit ? eduCrit.max : 0;
+        
+        const flexibleCriteria = template.criteria.filter(c => c.key !== 'service' && c.key !== 'education');
+        const remaining = 100 - (maxYears + eduMax);
+        const flexSum = flexibleCriteria.reduce((sum, c) => sum + c.max, 0);
+        
+        if (flexSum > 0 && remaining > 0) {
+            let distSum = 0;
+            flexibleCriteria.forEach(c => {
+                const prop = Math.round((c.max / flexSum) * remaining);
+                c.max = prop;
+                distSum += prop;
+            });
+            const diff = remaining - distSum;
+            if (diff !== 0) {
+                let largest = flexibleCriteria[0];
+                flexibleCriteria.forEach(c => { if (c.max > largest.max) largest = c; });
+                largest.max += diff;
+            }
+        } else if (remaining <= 0) {
+            flexibleCriteria.forEach(c => c.max = 0);
+        }
+
+        let sAppx = template.serviceAppendix || `1 mark for every year of service, up to ${maxYears} marks.`;
+        template.serviceAppendix = sAppx.replace(/up to \d+ marks/i, `up to ${maxYears} marks`);
+    }
+    
+    return template;
+};
+
 window.calculateTotalScore = function() {
     let total = 0;
     const keys = ['education', 'service', 'turnout', 'knowledge', 'current_affairs', 'clean_record', 'commendations'];
@@ -580,6 +637,10 @@ window.loadScoringCandidates = async function() {
         if (!activeScoringCandidates.length) {
             candidateSelect.innerHTML = '<option value="">No candidates available for this selection</option>';
         } else {
+            const freshTemplate = await apiClient.getScoringTemplate();
+            scoringTemplate = window.applyDynamicServiceMax(activeScoringCandidates, freshTemplate);
+            if (typeof renderScoringTemplate === 'function') renderScoringTemplate();
+
             candidateSelect.innerHTML = '<option value="">Select Candidate...</option>' + activeScoringCandidates.map(c => {
                 const score = isRegional ? c.regional_total_score : c.total_score;
                 const statusStr = (score !== null && score !== undefined && score !== '') ? `[✅ Scored (${score} marks)]` : '[Pending]';
@@ -1633,78 +1694,8 @@ async function submitImportApps() {
     }
 }
 
-window.openScoringTemplateModal = function() {
-    if (!scoringTemplate) { loadScoringTemplate().then(window.openScoringTemplateModal); return; }
-    const criteria = document.getElementById('templateCriteriaEditor');
-    if (criteria) criteria.innerHTML = scoringTemplate.criteria.map(item => `<div style="display:grid;grid-template-columns:1fr 120px;gap:10px;margin-bottom:8px;"><input class="form-control" data-template-label="${item.key}" value="${item.label}"><input class="form-control" type="number" min="0" step="0.5" data-template-max="${item.key}" value="${item.max}"></div>`).join('');
-    const education = document.getElementById('templateEducationEditor');
-    if (education) education.innerHTML = scoringTemplate.educationAppendix.map(item => educationAppendixRow(item.qualification, item.marks)).join('');
-    const srv = document.getElementById('templateServiceAppendix');
-    if (srv) srv.value = scoringTemplate.serviceAppendix || '';
-    const st = document.getElementById('scoringTemplateStatus');
-    if (st) st.textContent = '';
-    document.getElementById('scoringTemplateModal')?.classList.add('active');
-};
-
-async function loadScoringTemplate() {
-    scoringTemplate = await apiClient.getScoringTemplate();
-    renderScoringTemplate();
-    return scoringTemplate;
-}
-
-function renderScoringTemplate() {
-    if (!scoringTemplate) return;
-    let total = 0;
-    scoringTemplate.criteria.forEach(item => {
-        total += Number(item.max) || 0;
-        const label = document.getElementById(`score_label_${item.key}`);
-        const maximum = document.getElementById(`score_max_${item.key}`);
-        const input = document.getElementById(`score_${item.key}`);
-        if (label) label.textContent = item.label;
-        if (maximum) maximum.textContent = item.max;
-        if (input) input.max = item.max;
-    });
-    const totalDisplay = document.getElementById('scoreMaxTotalDisplay');
-    if (totalDisplay) totalDisplay.textContent = total;
-    const education = document.getElementById('educationAppendixDisplay');
-    if (education) education.innerHTML = scoringTemplate.educationAppendix.map(item => `<div>${item.qualification} - <strong>${item.marks} marks</strong></div>`).join('') || 'No education appendix entries.';
-    const service = document.getElementById('serviceAppendixDisplay');
-    if (service) service.textContent = scoringTemplate.serviceAppendix || '';
-}
-
-function educationAppendixRow(qualification = '', marks = 0) {
-    return `<div style="display:grid;grid-template-columns:1fr 120px auto;gap:10px;margin-bottom:8px;"><input class="form-control" data-education-name value="${qualification}"><input class="form-control" type="number" min="0" step="0.5" data-education-marks value="${marks}"><button class="btn btn-outline" type="button" onclick="this.parentElement.remove()">Remove</button></div>`;
-}
-
-window.addEducationAppendixRow = function() { 
-    document.getElementById('templateEducationEditor')?.insertAdjacentHTML('beforeend', educationAppendixRow()); 
-};
-
-window.closeScoringTemplateModal = function() { 
-    document.getElementById('scoringTemplateModal')?.classList.remove('active'); 
-};
-
-window.saveScoringTemplate = async function() {
-    const criteria = scoringTemplate.criteria.map(item => ({
-        key: item.key,
-        label: document.querySelector(`[data-template-label="${item.key}"]`).value.trim(),
-        max: Number(document.querySelector(`[data-template-max="${item.key}"]`).value)
-    }));
-    const rows = Array.from(document.querySelectorAll('#templateEducationEditor > div'));
-    const educationAppendix = rows.map(row => ({ qualification: row.querySelector('[data-education-name]').value.trim(), marks: Number(row.querySelector('[data-education-marks]').value) }));
-    const status = document.getElementById('scoringTemplateStatus');
-    try {
-        const result = await apiClient.updateScoringTemplate({ criteria, educationAppendix, serviceAppendix: document.getElementById('templateServiceAppendix').value.trim() });
-        scoringTemplate = result.template;
-        renderScoringTemplate();
-        window.closeScoringTemplateModal();
-    } catch (err) {
-        if (status) {
-            status.style.color = '#dc2626';
-            status.textContent = err.message;
-        }
-    }
-};
+// Ensure the UI function logic relies on the modal wrapper, rather than direct rendering here.
+// Rendering of settings moved directly to panel-scoring.html modal logic
 
 function debounceReportSearch() {
     clearTimeout(reportSearchTimer);
@@ -1925,6 +1916,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         await loadApplicationsTable();
     } else if (filename === 'panel-scoring.html') {
         window.loadScoringRanks();
+        
+        // Auto-prompt Step 2 when selecting a rank for the first time
+        const rankSelect = document.getElementById('scoringRankSelect');
+        if (rankSelect) {
+            rankSelect.addEventListener('change', () => {
+                if (rankSelect.value && !sessionStorage.getItem('templateReviewed')) {
+                    sessionStorage.setItem('templateReviewed', '1');
+                    if (window.openScoringTemplateModal) {
+                        window.openScoringTemplateModal();
+                    }
+                }
+            });
+        }
     } else if (filename === 'merit-rankings.html') {
         loadReportRankOptions(true);
     }
